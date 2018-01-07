@@ -1,22 +1,12 @@
-import { Template } from 'meteor/templating';
-import { ReactiveVar } from 'meteor/reactive-var';
+import  createHistory  from 'history/createBrowserHistory';
+import { Meteor } from 'meteor/meteor';
+import ReactDOM from 'react-dom';
+import { Tracker } from 'meteor/tracker';
 
-import './main.html';
+import { Routing } from '../imports/routing/routing';
 
-Template.hello.onCreated(function helloOnCreated() {
-  // counter starts at 0
-  this.counter = new ReactiveVar(0);
-});
-
-Template.hello.helpers({
-  counter() {
-    return Template.instance().counter.get();
-  },
-});
-
-Template.hello.events({
-  'click button'(event, instance) {
-    // increment the counter when button is clicked
-    instance.counter.set(instance.counter.get() + 1);
-  },
+Meteor.startup(() => {
+  Tracker.autorun(() => {
+      ReactDOM.render(Routing, document.getElementById('worm'))
+    });
 });

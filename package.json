@@ -8,11 +8,16 @@
     "babel-runtime": "^6.26.0",
     "history": "^4.7.2",
     "meteor-node-stubs": "^0.3.2",
+    "moment": "^2.20.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-history": "^0.18.2",
+    "react-router": "^4.2.0",
     "react-router-dom": "^4.2.2",
     "shortid": "^2.2.8",
     "simpl-schema": "^1.4.0"
+  },
+  "engines": {
+    "node": "4.8.4"
   }
 }
