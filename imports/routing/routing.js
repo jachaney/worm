@@ -10,9 +10,8 @@ import createHistory from 'history/createBrowserHistory';
 
 import Dashboard from '../ui/dashboard';
 import Login from '../ui/login';
-import Signup from '../ui/signup';
 
-const unAuthPages = ['/','/signup','/login'];
+const unAuthPages = ['/','/login'];
 const authPages = ['/dashboard'];
 const pathname = location.pathname;
 const isUnAuthPage = unAuthPages.includes(pathname);
@@ -51,7 +50,6 @@ export const Routing = (
     <Switch>
       <PublicRoute exact path="/" component={ Login }/>
       <PublicRoute exact path="/login" component={ Login }/>
-      <PublicRoute exact path="/signup" component={ Signup }/>
       <PrivateRoute exact path="/dashboard" component={ Dashboard }/>
     </Switch>
   </Router>

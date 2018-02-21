@@ -1,0 +1,17 @@
+.contactListCard {
+  border-radius: 5px;
+  margin: .5rem .5rem 0 0;
+  cursor: default;
+  width: auto;
+  word-wrap: break-word;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.contactListCardInfo a {
+  display: block;
+  margin: 0 0 .5rem 1.5rem;
+}

@@ -1,0 +1,43 @@
+.searchDiv {
+  background: #044581;
+  color: #ffffff;
+  padding: .5rem;
+  top: 0;
+  width: 100%;
+  z-index: 2;
+}
+.filterDiv {
+  background: #044581;
+  color: #ffffff;
+  padding: .5rem;
+  text-align: center;
+  top: 0;
+  z-index: 2;
+}
+.searchCloseButton {
+  margin: .3rem 0 .3rem 0;
+  text-align: right;
+}
+.searchInput {
+  margin: .3rem 0 .3rem 0;
+}
+.filterElements {
+  margin: .3rem 0 .3rem 0;
+}
+.filterElements select {
+  border-radius: 5px;
+  color: #555555;
+  padding: .3rem;
+  width: 50%;
+}
+.filterElements option {
+  border-radius: 5px;
+  color: #555555;
+  width: 50%;
+}
+.filterClose {
+  text-align: right;
+}
+.filterAssignedTech {
+  width: 50%;
+}

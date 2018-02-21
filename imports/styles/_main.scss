@@ -1,3 +1,23 @@
+@import './ui/antd';
+@import './ui/contacts';
+@import './ui/contactlist';
+@import './ui/currentworklist';
 @import './ui/dashboard';
+@import './ui/horizmenu';
 @import './ui/login';
+@import './ui/sidenav';
 @import './ui/signup';
+@import './ui/workorder';
+@import './ui/wrapper';
+
+body {
+  height: 100%;
+  z-index: 0;
+}
+.backgroundImage {
+  background-image: url('background.jpg');
+  filter: grayscale(100%) brightness(.4);
+  opacity: .4;
+  position: fixed;
+  z-index: 0;
+}
