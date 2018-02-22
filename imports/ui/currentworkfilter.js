@@ -67,7 +67,11 @@ export default class CurrentWorkFilter extends React.Component{
           <RangePicker
             id="filterRangePicker"
             onChange={this.onRangeSelected.bind(this)}
-            value={this.state.rangePickerValue}
+            defaultValue={this.state.rangePickerValue}
+            ranges={{'Today':[moment(),moment()],
+              'This Week':[moment().startOf('week'),moment().endOf('week')],
+              'This Month':[moment().startOf('month'),moment().endOf('month')],
+              'This Year':[moment().startOf('year'),moment().endOf('year')]}}
           />
         </div>
         <div
