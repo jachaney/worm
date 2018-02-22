@@ -2,6 +2,7 @@ import React from 'react';
 import createHistory from 'history/createBrowserHistory';
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
+import { Random } from 'meteor/random';
 import moment from 'moment';
 import { Checkbox,Input,Menu,Button,Icon,Divider,DatePicker,TimePicker } from 'antd';
 
@@ -358,9 +359,6 @@ export default class SelectedWorkOrder extends React.Component{
     })
   }
 
-  renderTotalTime() {
-  }
-
   render() {
     return this.state.selectedWorkOrder.map((workOrder) => {
       return <div
@@ -387,51 +385,98 @@ export default class SelectedWorkOrder extends React.Component{
               <Button
                 title="Back to the Dashboard"
                 onClick={(e) => {
-                  this.props.toDashboard();
+                  if (workOrder.isComplete === false) {
+                    this.props.toDashboard();
+                  } else {
+                    this.props.exitCompletedOrder();
+                  }
                 }}
               >
                 <Icon type="dashboard"/>
                 Dashboard
               </Button>
-              <Button
-                onClick={(e) => {
-                  this.props.toDashboard();
-                }}
-                title="Complete This Order"
-                type="primary"
-              >
-                <Icon type="check-circle-o"/>
-                Complete Order
-              </Button>
+              {workOrder.isComplete === false ?
+                <Button
+                  onClick={(e) => {
+                    let newWorkOrderKey = Random.id();
+                    this.state.selectedWorkOrder.forEach((workOrder) => {
+                      let _id = workOrder._id;
+                      let assignedTech = workOrder.assignedTech;
+                      let customerName = workOrder.customerName;
+                      let frequency = workOrder.frequency;
+                      let location = workOrder.location;
+                      let priority = workOrder.priority;
+                      let title = workOrder.title;
+                      let userKey = workOrder.userKey;
+                      let workOrderKey = newWorkOrderKey;
+                      let orgKey = workOrder.orgKey;
+                      if (frequency === "1") {
+                        dueDate = moment(workOrder.dueDate).add(1,'weeks').format('YYYY-MM-DD HH:mm');
+                      } else if (frequency === "2") {
+                        dueDate = moment(workOrder.dueDate).add(1,'months').format('YYYY-MM-DD HH:mm');
+                      } else if (frequency === "3") {
+                        dueDate = moment(workOrder.dueDate).add(6,'months').format('YYYY-MM-DD HH:mm');
+                      } else if (frequency === "4") {
+                        dueDate = moment(workOrder.dueDate).add(1,'years').format('YYYY-MM-DD HH:mm');
+                      }
+                      if (frequency != "0") {
+                        Meteor.call('workorder.duplicate',assignedTech,customerName,
+                          dueDate,frequency,location,priority,title,userKey,workOrderKey,
+                          orgKey);
+                          this.state.tasks.forEach((task) => {
+                            let isHeading = task.isHeading;
+                            let isCheckbox = task.isCheckbox;
+                            let contents = task.contents;
+                            let workOrderKey = newWorkOrderKey;
+                            let userKey = task.userKey;
+                            Meteor.call('duplicate.workorderitem',isHeading,isCheckbox,
+                              workOrderKey,userKey,contents);
+                          })
+                      }
+                      Meteor.call('workorder.complete',_id);
+                    })
+                    this.props.toDashboard();
+                  }}
+                  title="Complete This Order"
+                  type="primary"
+                >
+                  <Icon type="check-circle-o"/>
+                  Complete Order
+                </Button>
+              : null}
             </div>
           <div className="workOrderItemsDivider"/>
           <div
             className="workOrderHeaderClock"
           >
-            <Button
-              onClick={(e) => {
-                this.props.onClockIn(workOrder.workOrderKey);
-              }}
-              disabled={this.props.clockedIn || this.props.onBreak || this.props.clockedInOrderId !== workOrder.workOrderKey ? true : false}
-              title={this.props.clockedIn ? "Clock Out of Task" : "Clock Into Task"}
-              type={this.props.clockedIn ? "danger" : "primary"}
-              value={workOrder._id}
-            >
-              <Icon type="clock-circle-o"/>
-              {this.props.clockedIn && this.props.clockedInOrderId === workOrder.workOrderKey ? "Clock Out" : "Clock In"}
-            </Button>
-            <Button
-              onClick={(e) => {
-                this.props.onBreakIn(workOrder.workOrderKey);
-              }}
-              disabled={this.props.clockedIn && this.props.onBreak === false && this.props.clockedInOrderId === workOrder.workOrderKey ? false : true}
-              title={this.props.onBreak ? "Clock Out of Break" : "Clock Into Break"}
-              type={this.props.onBreak ? "danger" : "primary"}
-              value={workOrder._id}
-            >
-              <Icon type="coffee"/>
-              {this.props.onBreak && this.props.clockedInOrderId === workOrder.workOrderKey ? "Clock Out of Break" : "Clock Into Break"}
-            </Button>
+            {workOrder.isComplete === false ?
+              <Button
+                onClick={(e) => {
+                  this.props.onClockIn(workOrder.workOrderKey);
+                }}
+                disabled={this.props.clockedIn || this.props.onBreak || this.props.clockedInOrderId !== workOrder.workOrderKey ? true : false}
+                title={this.props.clockedIn ? "Clock Out of Task" : "Clock Into Task"}
+                type={this.props.clockedIn ? "danger" : "primary"}
+                value={workOrder._id}
+              >
+                <Icon type="clock-circle-o"/>
+                {this.props.clockedIn && this.props.clockedInOrderId === workOrder.workOrderKey ? "Clock Out" : "Clock In"}
+              </Button>
+            : null}
+            {workOrder.isComplete === false ?
+              <Button
+                onClick={(e) => {
+                  this.props.onBreakIn(workOrder.workOrderKey);
+                }}
+                disabled={this.props.clockedIn && this.props.onBreak === false && this.props.clockedInOrderId === workOrder.workOrderKey ? false : true}
+                title={this.props.onBreak ? "Clock Out of Break" : "Clock Into Break"}
+                type={this.props.onBreak ? "danger" : "primary"}
+                value={workOrder._id}
+              >
+                <Icon type="coffee"/>
+                {this.props.onBreak && this.props.clockedInOrderId === workOrder.workOrderKey ? "Clock Out of Break" : "Clock Into Break"}
+              </Button>
+            : null}
             {this.renderTimes()}
             <div
               className="pure-u-1"

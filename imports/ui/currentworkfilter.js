@@ -4,7 +4,7 @@ import createHistory from 'history/createBrowserHistory';
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
 import moment from 'moment';
-import { Menu, Icon, Dropdown, Input, Button, DatePicker, Select, AutoComplete} from 'antd';
+import { Menu,Icon,Dropdown,Input,Button,DatePicker,Select,AutoComplete,Switch} from 'antd';
 
 const { RangePicker } = DatePicker;
 const Option = Select.Option;
@@ -50,6 +50,10 @@ export default class CurrentWorkFilter extends React.Component{
     })
   }
 
+  toggleShowComplete(e) {
+    this.props.toggleShowComplete();
+  }
+
   render() {
     return (
       <div
@@ -57,7 +61,7 @@ export default class CurrentWorkFilter extends React.Component{
         className="pure-u-1 filterDiv"
       >
         <div
-          className="pure-u-sm-1 pure-u-lg-1-3 filterElements"
+          className="pure-u-sm-1 pure-u-lg-1-4 filterElements"
         >
           <span>By Date Range:&nbsp;</span>
           <RangePicker
@@ -67,7 +71,7 @@ export default class CurrentWorkFilter extends React.Component{
           />
         </div>
         <div
-          className="pure-u-sm-1 pure-u-lg-1-3 filterElements"
+          className="pure-u-sm-1 pure-u-lg-1-4 filterElements"
         >
           <span>Or By Assigned Employee:&nbsp;</span>
           <Select
@@ -83,7 +87,16 @@ export default class CurrentWorkFilter extends React.Component{
           </Select>
         </div>
         <div
-          className="pure-u-sm-1 pure-u-lg-1-3 filterElements filterClose"
+          className="pure-u-sm-1 pure-u-lg-1-4 filterElements"
+        >
+          <span>Show Completed Orders:&nbsp;</span>
+          <Switch
+            defaultChecked={this.props.toggleShowCompleteOn}
+            onChange={this.toggleShowComplete.bind(this)}
+          />
+        </div>
+        <div
+          className="pure-u-sm-1 pure-u-lg-1-4 filterElements filterClose"
         >
           <Button
             onClick={() => {

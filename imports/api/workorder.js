@@ -25,6 +25,7 @@ Meteor.methods({
       customerName: '',
       dueDate: '',
       frequency: '',
+      isComplete: false,
       location: '',
       onBreak: false,
       priority: '',
@@ -127,5 +128,38 @@ Meteor.methods({
     {$set: {
       onBreak: false
     }},{upsert: true})
+  },
+  'workorder.complete' (_id) {
+    if (!this.userId) {
+      throw new Meteor.Error('Unauthorized access');
+    }
+    WorkOrders.update({_id},
+    {$set: {
+      isComplete: true,
+      completedOn: moment().format('YYYY-MM-DD HH:mm')
+    }},{upsert: true})
+  },
+  'workorder.duplicate' (assignedTech,customerName,dueDate,
+    frequency,location,priority,title,userKey,workOrderKey,
+    orgKey) {
+    if (!this.userId) {
+      throw new Meteor.Error('Unauthorized access');
+    }
+    WorkOrders.insert({
+      assignedTech,
+      clockedIn: false,
+      createdOn: moment().format('YYYY-MM-DD HH:mm:ss:SSSSSS'),
+      customerName,
+      dueDate,
+      frequency,
+      isComplete: false,
+      location,
+      onBreak: false,
+      priority,
+      title,
+      userKey,
+      workOrderKey,
+      orgKey
+    })
   },
 })

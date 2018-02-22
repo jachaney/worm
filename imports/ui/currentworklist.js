@@ -14,29 +14,16 @@ export default class CurrentWorkList extends React.Component{
     this.props.onOrderClick(e.target.id);
   }
 
-  renderStatus() {
-    return this.props.workorders.map((workOrder) => {
-      if (clockedIn === true && id === key && onBreak === false) {
-        <p>Status: Clocked In</p>
-      }
-      if (clockedIn === true && id === key && onBreak === true) {
-        <p>Status: On Break</p>
-      }
-      if (clockedIn === false) {
-        <p>Status: Clocked Out</p>
-      }
-    })
-  }
-
   render() {
-    return this.props.workorders.map((workorder) => {
+    return this.props.workOrders.map((workOrder) => {
       let clockedIn = this.props.clockedIn;
       let id = this.props.clockedInOrderId;
-      let key = workorder.workOrderKey;
+      let key = workOrder.workOrderKey;
       let onBreak = this.props.onBreak;
+      let isComplete = workOrder.isComplete;
       return <div
         className="pure-u-1 pure-u-md-1-2 pure-u-lg-1-5"
-        key={workorder._id}
+        key={workOrder._id}
       >
         <Card
           id="currentWorkListCard"
@@ -44,7 +31,7 @@ export default class CurrentWorkList extends React.Component{
           className="currentWorkListCard"
           actions={[
             <Icon
-              id={workorder.workOrderKey}
+              id={workOrder.workOrderKey}
               type="select"
               onClick={this.onCardClick.bind(this)}
             >Open</Icon>,
@@ -63,9 +50,9 @@ export default class CurrentWorkList extends React.Component{
                         okType: "danger",
                         cancelText: "No",
                         onOk() {
-                          let workOrderKey = workorder.workOrderKey;
-                          Meteor.call('delete.workorder', workOrderKey);
-                          Meteor.call('delete.workorderitems', workOrderKey);
+                          let workOrderKey = workOrder.workOrderKey;
+                          Meteor.call('delete.workOrder', workOrderKey);
+                          Meteor.call('delete.workOrderitems', workOrderKey);
                         },
                         onCancel() {
                           null;
@@ -90,25 +77,38 @@ export default class CurrentWorkList extends React.Component{
             </Dropdown>,
           ]}
         >
-          <h2>{workorder.title}</h2>
-          <p>Work Order ID: {workorder._id}</p>
-          <p>{workorder.location}</p>
-          <p>Due Date: {moment(workorder.dueDate).format('MMM Do YYYY')}</p>
-          <p>Start Time: {moment(workorder.dueDate).format("h:mm a")}</p>
-          {clockedIn && id === key && !onBreak ?
+          <h2>{workOrder.title}</h2>
+          <p>Work Order ID: {workOrder._id}</p>
+          <a
+            href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(workOrder.location)}
+            target="_blank"
+          >
+            {workOrder.location}
+          </a>
+          <p/>
+          <p>Due Date: {moment(workOrder.dueDate).format('MMM Do YYYY')}</p>
+          {workOrder.isComplete === false ?
+          <p>Start Time: {moment(workOrder.dueDate).format("h:mm a")}</p>
+          :
+          <p>Completed On: {moment(workOrder.completedOn).format("MMM Do YYYY h:mm a")}</p>
+          }
+          {isComplete === true ?
+            <span>Status:<h3 style={{color: "green"}}>Complete</h3></span>
+            : null
+          }
+          {clockedIn && id === key && !onBreak && isComplete === false ?
               <span>Status:<h3 style={{color: "green"}}>Clocked In</h3></span>
             : null
           }
-          {clockedIn && id === key && onBreak ?
+          {clockedIn && id === key && onBreak && isComplete === false ?
               <span>Status:<h3 style={{color: "orange"}}>On Break</h3></span>
           : null
           }
-          {clockedIn && id === key ? null :
+          {clockedIn && id === key || isComplete === true ? null :
               <span>Status:<h3 style={{color: "red"}}>Clocked Out</h3></span>
           }
         </Card>
       </div>
     })
   }
-
 }

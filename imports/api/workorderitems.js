@@ -17,7 +17,6 @@ Meteor.methods({
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
-
     WorkOrderItems.insert({
       createdOn: moment().format('YYYY-MM-DD HH:mm:ss:SSSSSS'),
       isHeading: isHeading,
@@ -27,13 +26,13 @@ Meteor.methods({
       headingKey: Random.id(),
       checkboxKey: Random.id(),
       userKey: Meteor.user().profile.userKey,
+      orgKey: Meteor.user().profile.orgKey
     })
   },
   'delete.workorderitems'(workOrderKey) {
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
-
     WorkOrderItems.remove({
       workOrderKey: workOrderKey,
     });
@@ -42,7 +41,6 @@ Meteor.methods({
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
-
     WorkOrderItems.remove({
       _id: _id,
     });
@@ -51,7 +49,6 @@ Meteor.methods({
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
-
     WorkOrderItems.update({_id},
       {$set: {
         contents: contents
@@ -62,11 +59,26 @@ Meteor.methods({
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
-
     WorkOrderItems.update({_id},
       {$set: {
         isChecked: isChecked
       }
     },{upsert: true});
+  },
+  'duplicate.workorderitem'(isHeading,isCheckbox,workOrderKey,userKey,contents) {
+    if (!this.userId) {
+      throw new Meteor.Error('Unauthorized access');
+    }
+    WorkOrderItems.insert({
+      isHeading,
+      isCheckbox,
+      workOrderKey,
+      userKey,
+      contents,
+      createdOn: moment().format('YYYY-MM-DD HH:mm:ss:SSSSSS'),
+      isChecked: false,
+      headingKey: Random.id(),
+      checkboxKey: Random.id()
+    })
   }
 })

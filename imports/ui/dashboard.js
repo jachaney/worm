@@ -7,6 +7,7 @@ import moment from 'moment';
 import { DatePicker,Layout,Menu,Icon,Row,Dropdown,Modal } from 'antd';
 
 import ContactsList from './contactslist';
+import CompletedWorkList from './completedworklist';
 import CurrentWorkFilter from './currentworkfilter';
 import CurrentWorkList from './currentworklist';
 import CurrentDashboardSearch from './currentdashboardsearch';
@@ -32,6 +33,7 @@ export default class Dashboard extends React.Component {
     this.state = {
       clockedIn: false,
       clockedInOrderId: '',
+      completedWorkOrders: [],
       contacts: [],
       disableAddContact: false,
       disableContactsList: false,
@@ -49,6 +51,7 @@ export default class Dashboard extends React.Component {
       selectedWorkOrderId: '',
       selectedKeys: [''],
       showContactsList: false,
+      showCompletedWorkList: false,
       showCurrentWorkFilter: false,
       showCurrentWorkList: true,
       showCurrentDashboardSearch: false,
@@ -58,6 +61,7 @@ export default class Dashboard extends React.Component {
       showSelectedContact: false,
       showSelectedWorkOrder: false,
       startDate: new Date(),
+      toggleShowCompleteOn: false,
       workOrders: [],
     }
   };
@@ -65,8 +69,10 @@ export default class Dashboard extends React.Component {
   componentDidMount() {
     this.dashTracker = Tracker.autorun(() => {
       let workOrdersReady = Meteor.subscribe('WorkOrders');
-      const workOrders = WorkOrders.find({},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
+      const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
       this.setState ({workOrders});
+      const completedWorkOrders = WorkOrders.find({isComplete: true},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
+      this.setState ({completedWorkOrders});
       const clockedInOrder = WorkOrders.find({clockedIn: true}).fetch();
       try {
         clockedInOrder.map((order) => {
@@ -89,13 +95,14 @@ export default class Dashboard extends React.Component {
 
   resetWorkOrderDashboard() {
     let workOrdersReady = Meteor.subscribe('WorkOrders');
-    const workOrders = WorkOrders.find({},{sort:{clockedIn: -1, dueDate: 1}}).fetch();
+    const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},{sort:{clockedIn: -1, dueDate: 1}}).fetch();
     this.setState ({workOrders});
     this.setState({showSelectedWorkOrder: false});
     this.setState({showCurrentDashboardSearch: false});
     this.setState({showCurrentWorkFilter: false});
     this.setState({showNewWorkOrder: false});
     this.setState({showContactsList: false});
+    this.setState({showCompletedWorkList: false});
     this.setState({selectedWorkOrderId: ''});
     this.setState({showCurrentWorkList: true});
     document.getElementById('backgroundImage').style.display = "block";
@@ -119,7 +126,9 @@ export default class Dashboard extends React.Component {
   onOrderClick(e) {
     this.setState({selectedWorkOrderId: e});
     this.setState({showCurrentWorkList: false});
+    this.setState({showCompletedWorkList: false});
     this.setState({showCurrentDashboardSearch: false});
+    this.setState({showCurrentWorkFilter: false});
     this.setState({showSelectedWorkOrder: true});
     if (this.state.clockedIn === false) {
       this.setState({clockedInOrderId: e});
@@ -238,11 +247,17 @@ export default class Dashboard extends React.Component {
     let end = moment(e[1]).add(1,'d').format('YYYY-MM-DD');
     Meteor.subscribe('WorkOrders');
     if (e.length > 0) {
-      let workOrders = WorkOrders.find({dueDate: {$gte: beginning, $lte: end}},{sort: {dueDate: 1}}).fetch();
+      let workOrders = WorkOrders.find({$and:[{dueDate: {$gte: beginning, $lte: end}},
+        {$or: [{isComplete: false},{isComplete: undefined}]}]},
+        {sort: {dueDate: 1}}).fetch();
       this.setState ({workOrders});
+      const completedWorkOrders = WorkOrders.find({$and:[{dueDate: {$gte: beginning, $lte: end}},{isComplete: true}]},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
+      this.setState({completedWorkOrders})
     } else {
-      let workOrders = WorkOrders.find({},{sort: {dueDate: 1}}).fetch();
+      const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
       this.setState ({workOrders});
+      const completedWorkOrders = WorkOrders.find({isComplete: true},{sort:{dueDate: 1}}).fetch();
+      this.setState ({completedWorkOrders});
     }
   }
 
@@ -286,6 +301,19 @@ export default class Dashboard extends React.Component {
     this.setState({onBreak: false});
     Meteor.call('workorder.breakout',workOrderKey);
     Meteor.call('time.breakout',_id);
+  }
+
+  toggleShowComplete(e) {
+    this.setState({showCurrentWorkList: !this.state.showCurrentWorkList});
+    this.setState({showCompletedWorkList: !this.state.showCompletedWorkList});
+    this.setState({toggleShowCompleteOn: !this.state.toggleShowCompleteOn});
+  }
+
+  exitCompletedOrder() {
+    this.setState({showSelectedWorkOrder: false});
+    this.setState({selectedWorkOrderId: ''});
+    this.setState({showCurrentWorkFilter: true});
+    this.setState({showCompletedWorkList: true});
   }
 
   render() {
@@ -401,6 +429,8 @@ export default class Dashboard extends React.Component {
               onClose={this.resetWorkOrderDashboard.bind(this)}
               onFilterByRange={this.onFilterByRange.bind(this)}
               onSelectAssignedTechChange={this.onSelectAssignedTechChange.bind(this)}
+              toggleShowComplete={this.toggleShowComplete.bind(this)}
+              toggleShowCompleteOn={this.state.toggleShowCompleteOn}
             />
           : null}
           <div
@@ -418,7 +448,7 @@ export default class Dashboard extends React.Component {
                 startdate={this.state.startDate}
                 enddate={this.state.endDate}
                 id={this.state.selectedWorkOrderId}
-                workorders={this.state.workOrders}
+                workOrders={this.state.workOrders}
                 onOrderClick={this.onOrderClick.bind(this)}
                 clockedIn={this.state.clockedIn}
                 clockedInOrderId={this.state.clockedInOrderId}
@@ -429,6 +459,7 @@ export default class Dashboard extends React.Component {
           {this.state.showSelectedWorkOrder ?
             <SelectedWorkOrder
               toDashboard={this.resetWorkOrderDashboard.bind(this)}
+              exitCompletedOrder={this.exitCompletedOrder.bind(this)}
               selectedWorkOrderId={this.state.selectedWorkOrderId}
               clockedIn={this.state.clockedIn}
               clockedInOrderId={this.state.clockedInOrderId}
@@ -460,6 +491,12 @@ export default class Dashboard extends React.Component {
             <SelectedContact
               selectedContactKey={this.state.selectedContactKey}
               toDashboard={this.resetContactsDashboard.bind(this)}
+            />
+          : null}
+          {this.state.showCompletedWorkList ?
+            <CompletedWorkList
+              onOrderClick={this.onOrderClick.bind(this)}
+              workOrders={this.state.completedWorkOrders}
             />
           : null}
         </div>
