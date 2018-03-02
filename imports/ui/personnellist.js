@@ -7,26 +7,27 @@ import { Menu, Icon, Card, Dropdown, Modal} from 'antd';
 const { Meta } = Card;
 const confirm = Modal.confirm;
 
-export default class ContactsList extends React.Component{
+export default class PersonnelList extends React.Component{
+
   onCardClick(e) {
-      this.props.onContactClick(e.target.id);
+    this.props.onPersonnelClick(e.target.id);
   }
 
   render() {
-    return this.props.contacts.map((contact) => {
-      let _id = contact._id;
-      let contactKey = contact.contactKey;
+    return this.props.personnel.map((person) => {
+      let _id = person._id;
+      if (_id != Meteor.user()._id) {
       return <div
         className="pure-u-1 pure-u-md-1-2 pure-u-lg-1-5"
         key={_id}
       >
         <Card
-          id="contactListCard"
+          id="personnelListCard"
           hoverable
           className="contactListCard"
           actions={[
             <Icon
-              id={contactKey}
+              id={person.userKey}
               type="select"
               onClick={this.onCardClick.bind(this)}
             >Open</Icon>,
@@ -35,23 +36,19 @@ export default class ContactsList extends React.Component{
               >
                 <Menu.Item>
                   <a
-                    disabled={Meteor.user().profile.isAdmin ||
-                      contact.userKey === Meteor.user().profile.userKey ? false
-                      : true}
+                    disabled={Meteor.user().profile.isAdmin ? false : true}
                     style={{
-                      color: Meteor.user().profile.isAdmin ||
-                        contact.userKey === Meteor.user().profile.userKey ? "red"
-                        : "#d3d3d3"
+                      color: Meteor.user().profile.isAdmin ? "red" : "#d3d3d3"
                     }}
                     onClick={(e) => {
                       confirm({
-                        title: "Are you sure you want to delete this contact?",
+                        title: "Are you sure you want to remove this person?",
                         okText: "Yes",
                         okType: "danger",
                         cancelText: "No",
                         onOk() {
-                          Meteor.call('contact.remove', contactKey);
-                          Meteor.call('contactitems.remove', contactKey);
+                          let userKey = person.userKey;
+                          Meteor.call('personnel.remove', userKey);
                         },
                         onCancel() {
                           null;
@@ -62,7 +59,7 @@ export default class ContactsList extends React.Component{
                     <Icon
                       type="delete"
                     />
-                    &nbsp;Delete Contact
+                    &nbsp;Delete
                   </a>
                 </Menu.Item>
               </Menu>
@@ -79,30 +76,32 @@ export default class ContactsList extends React.Component{
           <div
             className="contactListCardInfo"
           >
-            <h2>{contact.lastName}, {contact.firstName}</h2>
-            <p>Company: {contact.company}</p>
+            <h2>{person.lastName}, {person.firstName}</h2>
+            <p>ID: {person.personnelId}</p>
             <p>Address: <a
-                href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(contact.address)}
+                href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(person.address)}
                 target="_blank"
               >
-                {contact.address}
+                {person.address}
               </a>
             </p>
-            <p>Phone: <a
-                href={`tel:${contact.primePhone}`}
+            <span>Phone: <a
+                href={`tel:${person.phone}`}
               >
-                {contact.primePhone}
+                {person.phone}
               </a>
-            </p>
-            <p>E-mail: <a
-                href={`mailto:${contact.email}`}
+            </span>
+            <span>E-mail: <a
+                href={`mailto:${person.email}`}
               >
-                {contact.email}
+                {person.email}
               </a>
-            </p>
+            </span>
+            <p>Division: {person.division}</p>
           </div>
         </Card>
       </div>
+    }
     })
   }
 }

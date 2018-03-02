@@ -8,7 +8,7 @@ export const Contacts = new Mongo.Collection('contacts');
 
 if (Meteor.isServer) {
   Meteor.publish('Contacts', function() {
-    return Contacts.find({userKey: Meteor.user().profile.userKey});
+    return Contacts.find({orgKey: Meteor.user().profile.orgKey});
   })
 
   Meteor.methods({

@@ -4,27 +4,31 @@ import createHistory from 'history/createBrowserHistory';
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
 import moment from 'moment';
-import { DatePicker,Layout,Menu,Icon,Row,Dropdown,Modal } from 'antd';
+import { DatePicker,Menu,Icon,Row,Dropdown,Modal,Select } from 'antd';
 
 import ContactsList from './contactslist';
 import CompletedWorkList from './completedworklist';
 import CurrentWorkFilter from './currentworkfilter';
 import CurrentWorkList from './currentworklist';
 import CurrentDashboardSearch from './currentdashboardsearch';
+import MyProfile from './myprofile';
 import NewContact from './newcontact';
+import NewPersonnel from './newpersonnel';
 import NewWorkOrder from './newworkorder';
+import PersonnelList from './personnellist';
 import SelectedContact from './selectedcontact';
+import SelectedPersonnel from './selectedpersonnel';
 import SelectedWorkOrder from './selectedworkorder';
 
 import { Contacts } from './../api/contacts';
-import { Employees } from './../api/employees';
+import { Personnel } from './../api/personnel';
 import { Time } from './../api/time';
 import { WorkOrders } from './../api/workorder';
 
 const history = createHistory();
 const { SubMenu } = Menu;
-const { Header,Content,Footer,Sider } = Layout;
 const confirm = Modal.confirm;
+const Option = Select.Option;
 
 export default class Dashboard extends React.Component {
   rootSubmenuKeys = ['workSubMenu', 'contactsSubMenu'];
@@ -42,23 +46,34 @@ export default class Dashboard extends React.Component {
       disableCurrentDashboardSearch: false,
       disableContactsList: false,
       endDate: new Date(),
+      filterAssignedTech: '0',
+      filterBeginningDate: '',
+      filterEndDate: '',
+      lastOpenDashboard: '',
       menuCollapsed: true,
       menuMode: 'inline',
       menuClassName: '',
       onBreak: false,
       openKeys: [''],
+      personnel: [],
       selectedContactKey: '',
+      selectedPersonnelKey: '',
       selectedWorkOrderId: '',
       selectedKeys: [''],
+      showAssignOrderModal: false,
       showContactsList: false,
       showCompletedWorkList: false,
       showCurrentWorkFilter: false,
       showCurrentWorkList: true,
       showCurrentDashboardSearch: false,
       showDropdownMenu: true,
+      showMyProfile: false,
       showNewContact: false,
+      showNewPersonnel: false,
       showNewWorkOrder: false,
+      showPersonnelDashboard: false,
       showSelectedContact: false,
+      showSelectedPersonnel: false,
       showSelectedWorkOrder: false,
       startDate: new Date(),
       toggleShowCompleteOn: false,
@@ -69,9 +84,10 @@ export default class Dashboard extends React.Component {
   componentDidMount() {
     this.dashTracker = Tracker.autorun(() => {
       let workOrdersReady = Meteor.subscribe('WorkOrders');
-      const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
+      const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},
+        {sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
       this.setState ({workOrders});
-      const completedWorkOrders = WorkOrders.find({isComplete: true},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
+      const completedWorkOrders = WorkOrders.find({isComplete: true},{sort:{completedOn: 1}}).fetch();
       this.setState ({completedWorkOrders});
       const clockedInOrder = WorkOrders.find({clockedIn: true}).fetch();
       try {
@@ -84,8 +100,28 @@ export default class Dashboard extends React.Component {
         return null;
       }
       let contactsReady = Meteor.subscribe('Contacts');
-      const contacts = Contacts.find({},{sort:{lastName: 1}}).fetch();
+      const contacts = Contacts.find({},{sort:{lastName: 1,company: 1}}).fetch();
       this.setState({contacts});
+      Meteor.subscribe('Personnel');
+      let personnel = Personnel.find({},{sort:{lastName: 1}}).fetch();
+      this.setState({personnel});
+      Meteor.call('personnel.confirmrecord', function(err, recordVerified) {
+        if (!recordVerified) {
+          let _id = Meteor.user()._id;
+          let firstName = Meteor.user().profile.firstName;
+          let lastName = Meteor.user().profile.lastName;
+          let email = Meteor.user().profile.email;
+          let phone = Meteor.user().profile.phone;
+          let division = Meteor.user().profile.division;
+          let notes = Meteor.user().profile.notes;
+          let isAdmin = Meteor.user().profile.isAdmin;
+          let userKey = Meteor.user().profile.userKey;
+          let orgKey = Meteor.user().profile.orgKey;
+          let personnelId = Meteor.user().profile.personnelId;
+          Meteor.call('personnel.create',_id,firstName,lastName,email,phone,division,
+          notes,isAdmin,userKey,orgKey,personnelId);
+        }
+      });
     })
   }
 
@@ -104,6 +140,12 @@ export default class Dashboard extends React.Component {
     this.setState({showContactsList: false});
     this.setState({showCompletedWorkList: false});
     this.setState({selectedWorkOrderId: ''});
+    this.setState({selectedContactKey: ''});
+    this.setState({selectedPersonnelKey: ''});
+    this.setState({toggleShowCompleteOn: false});
+    this.setState({showPersonnelDashboard: false});
+    this.setState({showMyProfile: false});
+    this.setState({showNewPersonnel: false});
     this.setState({showCurrentWorkList: true});
     document.getElementById('backgroundImage').style.display = "block";
   }
@@ -117,9 +159,35 @@ export default class Dashboard extends React.Component {
     this.setState({showCurrentWorkFilter: false});
     this.setState({showCurrentWorkList: false});
     this.setState({showNewContact: false});
+    this.setState({selectedWorkOrderId: ''});
     this.setState({selectedContactKey: ''});
+    this.setState({selectedPersonnelKey: ''});
     this.setState({showSelectedContact: false});
+    this.setState({showPersonnelDashboard: false});
+    this.setState({showMyProfile: false});
+    this.setState({showNewPersonnel: false});
     this.setState({showContactsList: true});
+    document.getElementById('backgroundImage').style.display = "block";
+  }
+
+  resetPersonnelDashboard() {
+    let personnelReady = Meteor.subscribe('Personnel');
+    const personnel = Personnel.find({},{sort:{lastName: 1}}).fetch();
+    this.setState ({personnel});
+    this.setState({showSelectedWorkOrder: false});
+    this.setState({showCurrentDashboardSearch: false});
+    this.setState({showCurrentWorkFilter: false});
+    this.setState({showCurrentWorkList: false});
+    this.setState({showNewContact: false});
+    this.setState({selectedWorkOrderId: ''});
+    this.setState({selectedContactKey: ''});
+    this.setState({selectedPersonnelKey: ''});
+    this.setState({showSelectedContact: false});
+    this.setState({showMyProfile: false});
+    this.setState({showContactsList: false});
+    this.setState({showSelectedPersonnel: false});
+    this.setState({showNewPersonnel: false});
+    this.setState({showPersonnelDashboard: true});
     document.getElementById('backgroundImage').style.display = "block";
   }
 
@@ -140,6 +208,19 @@ export default class Dashboard extends React.Component {
     this.setState({showContactsList: false});
     this.setState({showCurrentDashboardSearch: false});
     this.setState({showSelectedContact: true});
+  }
+
+  onPersonnelClick(e) {
+    this.setState({selectedPersonnelKey: e});
+    this.setState({showCurrentDashboardSearch: false});
+    this.setState({showPersonnelDashboard: false});
+    this.setState({showSelectedPersonnel: true});
+  }
+
+  showAssignOrderModal(e) {
+    this.setState({showAssignOrderModal: true});
+    this.setState({selectedWorkOrderId: e});
+    this.setState({selectedPersonnelKey: "0"});
   }
 
   handleMenuItemClick(e) {
@@ -177,6 +258,23 @@ export default class Dashboard extends React.Component {
     } else if (e.key === "addContact") {
       this.setState({showContactsList: false});
       this.setState({showNewContact: true});
+    } else if (e.key === "myProfile") {
+      if (this.state.showCurrentWorkList === true) {
+        this.setState({lastOpenDashboard: 'showCurrentWorkList'});
+        this.setState({showCurrentWorkList: false});
+      } else if (this.state.showContactsList === true) {
+        this.setState({lastOpenDashboard: 'showContactsList'});
+        this.setState({showContactsList: false});
+      } else if (this.state.showPersonnelDashboard === true) {
+        this.setState({lastOpenDashboard: 'showPersonnelDashboard'});
+        this.setState({showPersonnelDashboard: false});
+      }
+      this.setState({showMyProfile: true});
+    } else if (e.key === "personnelDashboard") {
+      this.resetPersonnelDashboard();
+    } else if(e.key === "newPersonnel") {
+      this.setState({showPersonnelDashboard: false});
+      this.setState({showNewPersonnel: true});
     } else if (e.key === "logout") {
       confirm({
         title: "Are you sure you want to logout?",
@@ -226,35 +324,47 @@ export default class Dashboard extends React.Component {
   }
 
   onSearchEnter(e) {
-    if (this.state.showCurrentWorkList === true) {
-      Meteor.subscribe('WorkOrders');
+    if (this.state.showCurrentWorkList === true && e.trim().length > 0) {
       let workOrders = WorkOrders.find({$or: [{title: {$regex: e, $options: 'i'}},
         {assignedTech: {$regex: e, $options: 'i'}},{location:{$regex: e, $options: 'i'}},
-        {dueDate:{$regex: e, $options: 'i'}}]}).fetch();
+        {dueDate:{$regex: e, $options: 'i'}}]},{sort:{isComplete: 1,dueDate: 1}}).fetch();
       this.setState ({workOrders});
-    } else if (this.state.showContactsList === true){
-      Meteor.subscribe('Contacts');
+    } else if (this.state.showCurrentWorkList === true && e.trim().length === 0) {
+      let workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},
+        {sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
+        this.setState({workOrders});
+    } else if (this.state.showContactsList === true && e.trim().length > 0) {
       let contacts = Contacts.find({$or: [{lastName: {$regex: e, $options: 'i'}},
         {firstName: {$regex: e, $options: 'i'}},{address:{$regex: e, $options: 'i'}},
         {primePhone:{$regex: e, $options: 'i'}},{email:{$regex: e, $options: 'i'}},
         {company:{$regex: e, $options: 'i'}}]}).fetch();
       this.setState ({contacts});
+    } else if (this.state.showContactsList === true && e.trim().length === 0) {
+      let contacts = Contacts.find({},{sort:{lastName: 1}}).fetch();
+      this.setState({contacts});
     }
   }
 
   onFilterByRange(e) {
     let beginning = moment(e[0]).format('YYYY-MM-DD');
     let end = moment(e[1]).add(1,'d').format('YYYY-MM-DD');
-    Meteor.subscribe('WorkOrders');
     if (e.length > 0) {
-      let workOrders = WorkOrders.find({$and:[{dueDate: {$gte: beginning, $lte: end}},
-        {$or: [{isComplete: false},{isComplete: undefined}]}]},
-        {sort: {dueDate: 1}}).fetch();
-      this.setState ({workOrders});
-      const completedWorkOrders = WorkOrders.find({$and:[{dueDate: {$gte: beginning, $lte: end}},{isComplete: true}]},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
-      this.setState({completedWorkOrders})
+      this.setState({workOrders: this.state.workOrders.filter((workOrder) => {
+        return moment(workOrder.dueDate).isBetween(beginning,end);
+      })})
+      this.setState({completedWorkOrders: this.state.completedWorkOrders.filter((workOrder) => {
+        return moment(workOrder.dueDate).isBetween(beginning,end);
+      })})
+      // let workOrders = WorkOrders.find({$and:[{dueDate: {$gte: beginning, $lte: end}},
+      //   {$or: [{isComplete: false},{isComplete: undefined}]}]},
+      //   {sort: {dueDate: 1}}).fetch();
+      // this.setState ({workOrders});
+      // const completedWorkOrders = WorkOrders.find({$and:[{dueDate: {$gte: beginning, $lte: end}},
+      //   {isComplete: true}]},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
+      // this.setState({completedWorkOrders})
     } else {
-      const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
+      const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},
+        {sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
       this.setState ({workOrders});
       const completedWorkOrders = WorkOrders.find({isComplete: true},{sort:{dueDate: 1}}).fetch();
       this.setState ({completedWorkOrders});
@@ -262,13 +372,25 @@ export default class Dashboard extends React.Component {
   }
 
   onSelectAssignedTechChange(e) {
-    Meteor.subscribe('WorkOrders');
     if ( e != undefined ) {
-      let workOrders = WorkOrders.find({assignedTech: e},{sort: {dueDate: 1}}).fetch();
-      this.setState ({workOrders});
+      this.setState({workOrders: this.state.workOrders.filter((workOrder) => {
+          return workOrder.assignedTech === e
+        })
+      });
+      this.setState({completedWorkOrders: this.state.completedWorkOrders.filter((workOrder) => {
+          return workOrder.assignedTech === e
+        })
+      });
+      // let workOrders = WorkOrders.find({$and:[{assignedTech: e},{isComplete: false}]},{sort: {dueDate: 1}}).fetch();
+      // this.setState ({workOrders});
+      // const completedWorkOrders = WorkOrders.find({isComplete: true,assignedTech: e},{sort:{completedOn: 1}}).fetch();
+      // this.setState ({completedWorkOrders});
     } else {
-      let workOrders = WorkOrders.find({},{sort: {dueDate: 1}}).fetch();
+      const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},
+        {sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
       this.setState ({workOrders});
+      const completedWorkOrders = WorkOrders.find({isComplete: true},{sort:{completedOn: 1}}).fetch();
+      this.setState ({completedWorkOrders});
     }
   }
 
@@ -316,6 +438,29 @@ export default class Dashboard extends React.Component {
     this.setState({showCompletedWorkList: true});
   }
 
+  onMyProfileExit(e) {
+    let dashboardToShow = this.state.lastOpenDashboard;
+    if (dashboardToShow === "showCurrentWorkList") {
+      this.setState({showCurrentWorkList: true});
+    } else if (dashboardToShow === "showContactsList") {
+      this.setState({showContactsList: true});
+    } else if (dashboardToShow === "showPersonnelDashboard") {
+      this.setState({showPersonnelDashboard: true});
+    }
+    this.setState({showMyProfile: false});
+  }
+
+  renderAssignToOptions() {
+    return this.state.personnel.map((person) => {
+      return <Option
+        key={person._id}
+        value={person._id}
+      >
+        {person.lastName}, {person.firstName} (ID: {person.personnelId})
+      </Option>
+    })
+  }
+
   render() {
     return (
       <div>
@@ -346,15 +491,16 @@ export default class Dashboard extends React.Component {
             title={<span><Icon type="calendar"/><span>Work Order Management</span></span>}
           >
             <Menu.Item
-              disabled={this.state.showNewWorkOrder ? true : false}
+              disabled={this.state.showNewWorkOrder || this.state.showNewContact ||
+                this.state.showNewPersonnel ? true : false}
               key="workOrderDashboard"
             >
               <Icon type="dashboard"/>
               <span>Work Order Dashboard</span>
             </Menu.Item>
             <Menu.Item
-              disabled={this.state.showNewWorkOrder || !this.state.showCurrentWorkList
-                ? true : false}
+              disabled={this.state.showCurrentWorkList
+                ? false : true}
               key="newWorkOrder"
             >
               <Icon type="plus-square-o"/>
@@ -380,26 +526,58 @@ export default class Dashboard extends React.Component {
             title={<span><Icon type="contacts"/><span>Contacts</span></span>}
           >
             <Menu.Item
+              disabled={this.state.showNewWorkOrder || this.state.showNewContact ||
+                this.state.showNewPersonnel
+                ? true : false}
               key="contactsListDashboard"
             >
               <Icon type="dashboard" className="sideNavIcon"/>
               <span>Contacts Dashboard</span>
             </Menu.Item>
             <Menu.Item
-              disabled={this.state.showNewContact || !this.state.showContactsList
-                ? true : false}
+              disabled={this.state.showContactsList ? false : true}
               key="addContact"
             >
               <Icon type="user-add"/>
               <span>Add Contact</span>
             </Menu.Item>
             <Menu.Item
-              disabled={this.state.showNewContact || !this.state.showContactsList
-                ? true : false}
+              disabled={this.state.showNewContact || !this.state.showContactsList ||
+                this.state.showNewPersonnel ? true : false}
               key="showSearch"
             >
               <Icon type="search"/>
               <span>Search Contacts</span>
+            </Menu.Item>
+          </SubMenu>
+          <SubMenu
+            key="personnelSubMenu"
+            title={<span><Icon type="team"/><span>Personnel Management</span></span>}
+          >
+            <Menu.Item
+              disabled={this.state.showNewWorkOrder || this.state.showNewContact ||
+                this.state.showNewPersonnel ? true : false}
+              key="myProfile"
+            >
+              <Icon type="user"/>
+              <span>My Profile</span>
+            </Menu.Item>
+            <Menu.Item
+              disabled={this.state.showNewWorkOrder || this.state.showNewContact ||
+                this.state.showNewPersonnel
+                ? true : false}
+              key="personnelDashboard"
+            >
+              <Icon type="dashboard"/>
+              <span>Personnel Dashboard</span>
+            </Menu.Item>
+            <Menu.Item
+              disabled={this.state.showPersonnelDashboard &&
+                Meteor.user().profile.isAdmin ? false : true}
+              key="newPersonnel"
+            >
+              <Icon type="user-add"/>
+              <span>Add Personnel</span>
             </Menu.Item>
           </SubMenu>
           <Menu.Item
@@ -417,6 +595,58 @@ export default class Dashboard extends React.Component {
           id="dashboardDiv"
           onClick={this.hideMenu.bind(this)}
         >
+          <Modal
+            visible={this.state.showAssignOrderModal}
+            onOk={() => {
+              let workOrderKey = this.state.selectedWorkOrderId;
+              let userToAssign = this.state.selectedPersonnelKey;
+              let personFound = Personnel.find({userKey: userToAssign}).fetch();
+              if (personFound.length > 0) {
+                personFound.map((person) => {
+                  let assignedTech = person.lastName + ", " + person.firstName + ` (ID: ${person.personnelId})`;
+                  let userKey = person.userKey;
+                  Meteor.call('workorder.assign',workOrderKey,assignedTech,userKey);
+                  Meteor.call('assign.workorderitems',workOrderKey,userKey);
+                  this.setState({showAssignOrderModal: false});
+                  this.setState({selectedWorkOrderId: ''});
+                  this.setState({selectedPersonnelKey: ''});
+                })
+              } else {
+                let assignedTech = "Unassigned";
+                let userKey = 0;
+                Meteor.call('workorder.assign',workOrderKey,assignedTech,userKey);
+                this.setState({showAssignOrderModal: false});
+                this.setState({selectedWorkOrderId: ''});
+                this.setState({selectedPersonnelKey: ''});
+              }
+            }}
+            onCancel={() => {
+              this.setState({selectedWorkOrderId: ''});
+              this.setState({selectedPersonnelKey: ''});
+              this.setState({showAssignOrderModal: false});
+            }}
+            title="Assign Work Order"
+          >
+            <Icon
+              className="modalIcon"
+              type="solution"
+            />
+            <span className="modalSpan">&nbsp;Assign Work Order To: </span>
+            <Select
+              className="assignTaskModal"
+              defaultValue="0"
+              onChange={(e) => {
+                let _id = e;
+                let personFound = Personnel.find({_id}).fetch();
+                personFound.map((person) => {
+                  this.setState({selectedPersonnelKey: person.userKey});
+                })
+              }}
+            >
+              <Option value="0">Unassigned</Option>
+              {this.renderAssignToOptions()}
+            </Select>
+          </Modal>
           {this.state.showCurrentDashboardSearch ?
             <CurrentDashboardSearch
               onClose={this.searchClose.bind(this)}
@@ -426,6 +656,7 @@ export default class Dashboard extends React.Component {
           {this.state.showCurrentWorkFilter ?
             <CurrentWorkFilter
               workorders={this.state.workOrders}
+              personnel={this.state.personnel}
               onClose={this.resetWorkOrderDashboard.bind(this)}
               onFilterByRange={this.onFilterByRange.bind(this)}
               onSelectAssignedTechChange={this.onSelectAssignedTechChange.bind(this)}
@@ -453,6 +684,7 @@ export default class Dashboard extends React.Component {
                 clockedIn={this.state.clockedIn}
                 clockedInOrderId={this.state.clockedInOrderId}
                 onBreak={this.state.onBreak}
+                showAssignOrderModal={this.showAssignOrderModal.bind(this)}
               />
             : null}
           </div>
@@ -472,6 +704,7 @@ export default class Dashboard extends React.Component {
           : null}
           {this.state.showNewWorkOrder ?
             <NewWorkOrder
+              personnel={this.state.personnel}
               workOrders={this.state.workOrders}
               onClose={this.resetWorkOrderDashboard.bind(this)}
             />
@@ -479,6 +712,7 @@ export default class Dashboard extends React.Component {
           {this.state.showContactsList ?
             <ContactsList
               contacts={this.state.contacts}
+              personnel={this.state.personnel}
               onContactClick={this.onContactClick.bind(this)}
             />
           : null}
@@ -499,8 +733,32 @@ export default class Dashboard extends React.Component {
               workOrders={this.state.completedWorkOrders}
             />
           : null}
+          {this.state.showMyProfile ?
+            <MyProfile
+              id={Meteor.user()._id}
+              onMyProfileExit={this.onMyProfileExit.bind(this)}
+            />
+          : null}
+          {this.state.showPersonnelDashboard ?
+            <PersonnelList
+              onPersonnelClick={this.onPersonnelClick.bind(this)}
+              personnel={this.state.personnel}
+            />
+          : null}
+          {this.state.showSelectedPersonnel ?
+            <SelectedPersonnel
+              selectedPersonnelKey={this.state.selectedPersonnelKey}
+              onExit={this.resetPersonnelDashboard.bind(this)}
+            />
+          : null}
+          {this.state.showNewPersonnel ?
+            <NewPersonnel
+              onExit={this.resetPersonnelDashboard.bind(this)}
+            />
+          : null}
         </div>
       </div>
     )
   }
+
 };

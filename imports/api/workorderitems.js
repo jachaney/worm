@@ -9,7 +9,11 @@ export const WorkOrderItems = new Mongo.Collection('workorderitems');
 
 if (Meteor.isServer) {
   Meteor.publish('WorkOrderItems', function() {
-    return WorkOrderItems.find({userKey: Meteor.user().profile.userKey},{sort:{createdOn: 1}});
+    if (Meteor.user().profile.isAdmin) {
+      return WorkOrderItems.find({orgKey: Meteor.user().profile.orgKey},{sort:{createdOn: 1}});
+    } else {
+      return WorkOrderItems.find({userKey: Meteor.user().profile.userKey},{sort:{createdOn: 1}});
+    }
   })
 }
 Meteor.methods({
@@ -80,5 +84,15 @@ Meteor.methods({
       headingKey: Random.id(),
       checkboxKey: Random.id()
     })
-  }
+  },
+  'assign.workorderitems'(workOrderKey,userKey) {
+    if (!this.userId) {
+      throw new Meteor.Error('Unauthorized access');
+    }
+    WorkOrderItems.update({workOrderKey},
+      {$set: {
+        userKey
+      }
+    },{multi: true,upsert: true});
+  },
 })

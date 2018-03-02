@@ -5,7 +5,7 @@ import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
 import { Random } from 'meteor/random';
 import moment from 'moment';
-import { DatePicker,TimePicker,Checkbox,Input,Select,Menu,Button,Icon,message } from 'antd';
+import { DatePicker,TimePicker,Checkbox,Input,Select,Menu,Button,Icon,message,Divider } from 'antd';
 
 import { WorkOrders } from './../api/workorder';
 import { WorkOrderItems } from './../api/workorderitems';
@@ -121,8 +121,15 @@ export default class NewWorkOrder extends React.Component{
     })
   }
 
-  onSelectCustomer(e) {
-
+  renderPersonnelOptions() {
+    return this.props.personnel.map((person) => {
+      return <Option
+        key={person._id}
+        value={person.lastName + ", " + person.firstName + ` (ID: ${person.personnelId})`}
+      >
+        {person.lastName}, {person.firstName} (ID: {person.personnelId})
+      </Option>
+    })
   }
 
   render() {
@@ -233,12 +240,8 @@ export default class NewWorkOrder extends React.Component{
             }}
             style={{width: 200}}
           >
-            <Option value="0">Never</Option>
-            <Option value="1">Every Week</Option>
-            <Option value="2">Every Month</Option>
-            <Option value="3">Semi-Annualy</Option>
-            <Option value="4">Every Year</Option>
-            <Option value="5">Custom</Option>
+            <Option value="0">Unassigned</Option>
+            {this.renderPersonnelOptions()}
           </Select>
         </div>
         <div
@@ -264,6 +267,13 @@ export default class NewWorkOrder extends React.Component{
             Meteor.call('new.workorderitem',isHeading,isCheckbox,workOrderKey);
           }}>Add Checkbox</Button>
         </div>
+        <Divider>
+          Work Order Notes:
+        </Divider>
+        <TextArea
+          id="workOrderNotes"
+          defaultValue={workOrder.notes}
+        />
         <div className="workOrderItemsDivider"/>
         <div
           className="pure-u-1 workOrderFooterDiv"
@@ -281,7 +291,8 @@ export default class NewWorkOrder extends React.Component{
               let frequency = this.state.selectedFrequency;
               let priority = this.state.selectedPriority;
               let assignedTech = this.state.selectedAssignTo;
-              Meteor.call('save.workorder',_id,title,location,frequency,dueDate,startTime,customerName,assignedTech,priority,workOrderKey,(err,res) => {
+              let notes = document.getElementById('workOrderNotes').value;
+              Meteor.call('save.workorder',_id,title,location,frequency,dueDate,startTime,customerName,assignedTech,priority,workOrderKey,notes,(err,res) => {
                 if (err) {
                   return message.error(err.reason);
                 } else {

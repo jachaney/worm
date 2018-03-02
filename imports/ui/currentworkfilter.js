@@ -33,19 +33,13 @@ export default class CurrentWorkFilter extends React.Component{
     this.props.onSelectAssignedTechChange(e);
   }
 
-  renderTechs(e) {
-    <span>
-      Employee ID:&nbsp;{e}
-    </span>
-  }
-
-  renderOptions() {
-    return this.state.workOrders.map((workOrder) => {
+  renderTechs() {
+    return this.props.personnel.map((person) => {
       return <Option
-        value={workOrder._id}
-        key={workOrder._id}
+        value={person.lastName + ", " + person.firstName + ` (ID: ${person.personnelId})`}
+        key={person._id}
       >
-        {workOrder._id}&nbsp;({workOrder.assignedTech})
+        {person.lastName}, {person.firstName} (ID: {person.personnelId})
       </Option>
     })
   }
@@ -65,7 +59,6 @@ export default class CurrentWorkFilter extends React.Component{
         >
           <span>By Date Range:&nbsp;</span>
           <RangePicker
-            id="filterRangePicker"
             onChange={this.onRangeSelected.bind(this)}
             defaultValue={this.state.rangePickerValue}
             ranges={{'Today':[moment(),moment()],
@@ -77,17 +70,18 @@ export default class CurrentWorkFilter extends React.Component{
         <div
           className="pure-u-sm-1 pure-u-lg-1-4 filterElements"
         >
-          <span>Or By Assigned Employee:&nbsp;</span>
+          <span>And/Or By Assigned Employee:&nbsp;</span>
           <Select
             allowClear
+            disabled={Meteor.user().profile.isAdmin ? false : true}
             className="filterAssignedTech"
-            id="filterAssignedTech"
+            ref="filterAssignedTech"
             mode="combobox"
             onChange={this.onSelectAssignedTech.bind(this)}
             placeholder="Select An Employee..."
             value={this.state.selectValue}
           >
-            {this.renderOptions()}
+            {this.renderTechs()}
           </Select>
         </div>
         <div
@@ -103,6 +97,7 @@ export default class CurrentWorkFilter extends React.Component{
           className="pure-u-sm-1 pure-u-lg-1-4 filterElements filterClose"
         >
           <Button
+            className="filterCloseButton"
             onClick={() => {
               this.props.onClose();
             }}

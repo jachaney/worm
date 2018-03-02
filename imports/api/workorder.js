@@ -9,7 +9,11 @@ export const WorkOrders = new Mongo.Collection('workorders');
 
 if (Meteor.isServer) {
   Meteor.publish('WorkOrders', function() {
-    return WorkOrders.find({userKey: Meteor.user().profile.userKey});
+    if (Meteor.user().profile.isAdmin) {
+      return WorkOrders.find({orgKey: Meteor.user().profile.orgKey});
+    } else {
+      return WorkOrders.find({userKey: Meteor.user().profile.userKey});
+    }
   })
 }
 Meteor.methods({
@@ -22,6 +26,7 @@ Meteor.methods({
       assignedTech: '',
       clockedIn: false,
       createdOn: moment().format('YYYY-MM-DD HH:mm:ss:SSSSSS'),
+      createdBy: Meteor.user().profile.userKey,
       customerName: '',
       dueDate: '',
       frequency: '',
@@ -30,6 +35,7 @@ Meteor.methods({
       onBreak: false,
       priority: '',
       title: '',
+      notes: '',
       userKey: Meteor.user().profile.userKey,
       workOrderKey: Random.id(),
       orgKey: Meteor.user().profile.orgKey
@@ -43,7 +49,9 @@ Meteor.methods({
       workOrderKey: workOrderKey,
     });
   },
-  'save.workorder' (_id,title,location,frequency,dueDate,startTime,customerName,assignedTech,priority,workOrderKey) {
+  'save.workorder' (_id,title,location,frequency,dueDate,
+    startTime,customerName,assignedTech,priority,workOrderKey,
+    notes) {
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
@@ -90,6 +98,7 @@ Meteor.methods({
         customerName: customerName,
         assignedTech: assignedTech,
         priority: priority,
+        notes: notes
       }},{upsert: true});
   },
   'workorder.clockin' (workOrderKey) {
@@ -139,7 +148,7 @@ Meteor.methods({
       completedOn: moment().format('YYYY-MM-DD HH:mm')
     }},{upsert: true})
   },
-  'workorder.duplicate' (assignedTech,customerName,dueDate,
+  'workorder.duplicate' (assignedTech,createdBy,customerName,dueDate,
     frequency,location,priority,title,userKey,workOrderKey,
     orgKey) {
     if (!this.userId) {
@@ -149,6 +158,7 @@ Meteor.methods({
       assignedTech,
       clockedIn: false,
       createdOn: moment().format('YYYY-MM-DD HH:mm:ss:SSSSSS'),
+      createdBy,
       customerName,
       dueDate,
       frequency,
@@ -161,5 +171,26 @@ Meteor.methods({
       workOrderKey,
       orgKey
     })
+  },
+  'workorder.notes.update' (_id,notes) {
+    if (!this.userId) {
+      throw new Meteor.Error('Unauthorized access');
+    }
+    WorkOrders.update({_id},
+    {$set: {
+        notes: notes
+      }
+    },{upsert: true})
+  },
+  'workorder.assign'(workOrderKey,assignedTech,userKey) {
+    if (!this.userId) {
+      throw new Meteor.Error('Unauthorized access');
+    }
+    WorkOrders.update({workOrderKey},
+    {$set: {
+        assignedTech,
+        userKey
+      }
+    },{upsert: true})
   },
 })

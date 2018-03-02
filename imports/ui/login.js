@@ -54,6 +54,7 @@ export default class Login extends React.Component {
   onLoginEyeMouseUp() {
     document.getElementById('loginPassword').setAttribute("type","password");
   }
+
   onCreateEyeMouseDown() {
     document.getElementById('createAccountPassword').setAttribute("type","text");
   }
@@ -61,6 +62,7 @@ export default class Login extends React.Component {
   onCreateEyeMouseUp() {
     document.getElementById('createAccountPassword').setAttribute("type","password");
   }
+
   onConfirmEyeMouseDown() {
   document.getElementById('createAccountPasswordConfirm').setAttribute("type","text");
   }
@@ -76,6 +78,7 @@ export default class Login extends React.Component {
       this.setState({showLoginEye: false});
     }
   }
+
   onCreatePassword(e) {
     if (e.target.value.length > 0) {
       this.setState({showCreatePasswordEye: true});
@@ -83,6 +86,7 @@ export default class Login extends React.Component {
       this.setState({showCreatePasswordEye: false});
     }
   }
+
   onConfirmPassword(e) {
     if (e.target.value.length > 0) {
       this.setState({showConfirmPasswordEye: true});
@@ -97,8 +101,8 @@ export default class Login extends React.Component {
     let email = document.getElementById('createEmail').value.trim();
     let password = document.getElementById('createAccountPassword').value.trim();
     let confirmPassword = document.getElementById('createAccountPasswordConfirm').value.trim();
-    let firstname = document.getElementById('createFirstName').value.trim();
-    let lastname = document.getElementById('createLastName').value.trim();
+    let firstName = document.getElementById('createFirstName').value.trim();
+    let lastName = document.getElementById('createLastName').value.trim();
     let complexPassword = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
 
     SimpleSchema.setDefaultMessages({
@@ -129,15 +133,15 @@ export default class Login extends React.Component {
             }
           }
         },
-        firstname: {
+        firstName: {
           min: 1,
           type: String
         },
-        lastname: {
+        lastName: {
           min: 1,
           type: String
         }
-      }).validate({email,password,firstname,lastname});
+      }).validate({email,password,firstName,lastName});
     } catch (e) {
       message.error(e.message, 10);
       throw new Meteor.Error(400, e.message);
@@ -146,12 +150,16 @@ export default class Login extends React.Component {
       email,
       password,
       profile: {
-        firstname,
-        lastname,
+        firstName,
+        lastName,
         email,
+        phone: '',
+        division: '',
+        notes: '',
         isAdmin: true,
-        userKey: Random.id(),
-        orgKey: Random.id()
+        userKey: Random.secret(),
+        orgKey: Random.secret(),
+        personnelId: Random.id(6)
       }
     }, (err) => {
       if (err) {

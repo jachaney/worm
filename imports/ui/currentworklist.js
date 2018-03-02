@@ -4,7 +4,6 @@ import { Tracker } from 'meteor/tracker';
 import moment from 'moment';
 import { DatePicker, Menu, Icon, Card, Dropdown, Modal} from 'antd';
 
-
 const { Meta } = Card;
 const confirm = Modal.confirm;
 
@@ -16,10 +15,10 @@ export default class CurrentWorkList extends React.Component{
 
   render() {
     return this.props.workOrders.map((workOrder) => {
-      let clockedIn = this.props.clockedIn;
+      let clockedIn = workOrder.clockedIn;
       let id = this.props.clockedInOrderId;
       let key = workOrder.workOrderKey;
-      let onBreak = this.props.onBreak;
+      let onBreak = workOrder.onBreak;
       let isComplete = workOrder.isComplete;
       return <div
         className="pure-u-1 pure-u-md-1-2 pure-u-lg-1-5"
@@ -40,8 +39,25 @@ export default class CurrentWorkList extends React.Component{
               >
                 <Menu.Item>
                   <a
+                    disabled={Meteor.user().profile.isAdmin ? false : true}
                     style={{
-                      color: "red"
+                      color: Meteor.user().profile.isAdmin ? null : "#d3d3d3"
+                    }}
+                    onClick={() => {
+                      this.props.showAssignOrderModal(key);
+                    }}
+                  >
+                    <Icon
+                      type="solution"
+                    />
+                    &nbsp;Assign Work Order
+                  </a>
+                </Menu.Item>
+                <Menu.Item>
+                  <a
+                    disabled={Meteor.user().profile.isAdmin ? false : true}
+                    style={{
+                      color: Meteor.user().profile.isAdmin ? "red" : "#d3d3d3"
                     }}
                     onClick={(e) => {
                       confirm({
@@ -51,8 +67,8 @@ export default class CurrentWorkList extends React.Component{
                         cancelText: "No",
                         onOk() {
                           let workOrderKey = workOrder.workOrderKey;
-                          Meteor.call('delete.workOrder', workOrderKey);
-                          Meteor.call('delete.workOrderitems', workOrderKey);
+                          Meteor.call('delete.workorder', workOrderKey);
+                          Meteor.call('delete.workorderitems', workOrderKey);
                         },
                         onCancel() {
                           null;
@@ -91,6 +107,11 @@ export default class CurrentWorkList extends React.Component{
           <p>Start Time: {moment(workOrder.dueDate).format("h:mm a")}</p>
           :
           <p>Completed On: {moment(workOrder.completedOn).format("MMM Do YYYY h:mm a")}</p>
+          }
+          {workOrder.assignedTech === "0" ?
+            <p>Assigned To: Unassigned</p>
+          :
+            <p>Assigned To: {workOrder.assignedTech}</p>
           }
           {isComplete === true ?
             <span>Status:<h3 style={{color: "green"}}>Complete</h3></span>

@@ -9,7 +9,11 @@ export const Time = new Mongo.Collection('time');
 
 if (Meteor.isServer) {
   Meteor.publish('Time', function() {
-    return Time.find({userKey: Meteor.user().profile.userKey});
+    if (Meteor.user().profile.isAdmin) {
+      return Time.find({orgKey: Meteor.user().profile.orgKey});
+    } else {
+      return Time.find({userKey: Meteor.user().profile.userKey});
+    }
   })
 }
 

@@ -48,22 +48,34 @@ export default class SelectedWorkOrder extends React.Component{
       let totalSecondsWorked = 0;
       let totalBreakSeconds = 0;
       this.state.totalTimeWorked.forEach((time) => {
-        this.state.totalBreakTime.forEach((breakTime) => {
+        if (this.state.totalBreakTime.length > 0) {
+          this.state.totalBreakTime.forEach((breakTime) => {
+            let a = moment(time.clockIn);
+            let b = moment(time.clockOut);
+            let c = b.diff(a, 'seconds');
+            let d = moment(breakTime.clockIn);
+            let e = moment(breakTime.clockOut);
+            let f = e.diff(d, 'seconds');
+            totalSecondsWorked = totalSecondsWorked + c;
+            totalBreakSeconds = totalBreakSeconds + f;
+            let hoursWorked = totalSecondsWorked / 60 / 60;
+            let totalWorked = (Math.round(hoursWorked * 4) / 4).toFixed(2);
+            let breakHours = totalBreakSeconds / 60 / 60;
+            let breakTotal = (Math.round(breakHours * 4) / 4).toFixed(2);
+            let finalTotal = totalWorked - breakTotal;
+            return document.getElementById('totalHours').innerHTML = `<strong>Total Working Time:&nbsp;</strong>${finalTotal}<strong>&nbsp;hours.</strong>`;
+          })
+        } else {
           let a = moment(time.clockIn);
           let b = moment(time.clockOut);
           let c = b.diff(a, 'seconds');
-          let d = moment(breakTime.clockIn);
-          let e = moment(breakTime.clockOut);
-          let f = e.diff(d, 'seconds');
           totalSecondsWorked = totalSecondsWorked + c;
-          totalBreakSeconds = totalBreakSeconds + f;
           let hoursWorked = totalSecondsWorked / 60 / 60;
           let totalWorked = (Math.round(hoursWorked * 4) / 4).toFixed(2);
-          let breakHours = totalBreakSeconds / 60 / 60;
-          let breakTotal = (Math.round(breakHours * 4) / 4).toFixed(2);
+          let breakTotal = 0;
           let finalTotal = totalWorked - breakTotal;
           return document.getElementById('totalHours').innerHTML = `<strong>Total Working Time:&nbsp;</strong>${finalTotal}<strong>&nbsp;hours.</strong>`;
-        })
+        }
       })
     })
   }
@@ -386,6 +398,9 @@ export default class SelectedWorkOrder extends React.Component{
                 title="Back to the Dashboard"
                 onClick={(e) => {
                   if (workOrder.isComplete === false) {
+                    let _id = workOrder._id;
+                    let notes = document.getElementById("workOrderNotes").value.trim();
+                    Meteor.call('workorder.notes.update',_id,notes);
                     this.props.toDashboard();
                   } else {
                     this.props.exitCompletedOrder();
@@ -402,6 +417,7 @@ export default class SelectedWorkOrder extends React.Component{
                     this.state.selectedWorkOrder.forEach((workOrder) => {
                       let _id = workOrder._id;
                       let assignedTech = workOrder.assignedTech;
+                      let createdBy = workOrder.createdBy;
                       let customerName = workOrder.customerName;
                       let frequency = workOrder.frequency;
                       let location = workOrder.location;
@@ -420,7 +436,7 @@ export default class SelectedWorkOrder extends React.Component{
                         dueDate = moment(workOrder.dueDate).add(1,'years').format('YYYY-MM-DD HH:mm');
                       }
                       if (frequency != "0") {
-                        Meteor.call('workorder.duplicate',assignedTech,customerName,
+                        Meteor.call('workorder.duplicate',assignedTech,createdBy,customerName,
                           dueDate,frequency,location,priority,title,userKey,workOrderKey,
                           orgKey);
                           this.state.tasks.forEach((task) => {
@@ -489,7 +505,16 @@ export default class SelectedWorkOrder extends React.Component{
           >
             {this.renderTaskList()}
           </div>
-          <div className="workOrderItemsDivider"/>
+          <Divider>
+            Work Order Notes:
+          </Divider>
+          <TextArea
+            id="workOrderNotes"
+            defaultValue={workOrder.notes}
+            style={{
+              marginBottom: ".5rem"
+            }}
+          />
           <div
             className="pure-u-1 workOrderFooterDiv"
           >
