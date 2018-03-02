@@ -10,7 +10,7 @@ if (Meteor.isServer) {
   Meteor.methods({
 
     'userprofile.update'(userKey,firstName,lastName,email,phone,
-      address,division,notes,isAdmin,personnelId) {
+      address,division,position,notes,isAdmin,personnelId) {
       if (!this.userId) {
         throw new Meteor.Error('Unauthorized access');
       }
@@ -23,6 +23,7 @@ if (Meteor.isServer) {
             phone,
             address,
             division,
+            position,
             notes,
             isAdmin,
             userKey,

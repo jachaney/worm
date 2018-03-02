@@ -19,7 +19,10 @@ export default class CurrentDashboardSearch extends React.Component{
         className="searchDiv"
       >
         <div
-          className="pure-u-sm-2-3 pure-u-lg-21-24 searchInput"
+          className={
+            this.props.showContactsList ? "pure-u-1 searchInput"
+            : "pure-u-sm-2-3 pure-u-lg-21-24 searchInput"
+          }
         >
           <Input
             id="searchInput"
@@ -42,7 +45,13 @@ export default class CurrentDashboardSearch extends React.Component{
           />
         </div>
         <div
-          className="pure-u-sm-1-3 pure-u-lg-3-24 searchCloseButton"
+          className={
+            this.props.showContactsList ? ""
+            : "pure-u-sm-1-3 pure-u-lg-3-24 searchCloseButton"
+          }
+          style={{
+            display: this.props.showContactsList ? "none" : null
+          }}
         >
           <Button
             onClick={() => {

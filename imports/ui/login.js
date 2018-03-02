@@ -155,6 +155,7 @@ export default class Login extends React.Component {
         email,
         phone: '',
         division: '',
+        position: '',
         notes: '',
         isAdmin: true,
         userKey: Random.secret(),

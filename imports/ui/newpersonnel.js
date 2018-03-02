@@ -36,22 +36,22 @@ export default class NewPersonnel extends React.Component{
 
   onCreateEyeMouseDown() {
     let input = $("Input");
-    input[6].setAttribute("type","text");
+    input[7].setAttribute("type","text");
   }
 
   onCreateEyeMouseUp() {
     let input = $("Input");
-    input[6].setAttribute("type","password");
+    input[7].setAttribute("type","password");
   }
 
   onConfirmEyeMouseDown() {
     let input = $("Input");
-    input[7].setAttribute("type","text");
+    input[8].setAttribute("type","text");
   }
 
   onConfirmEyeMouseUp() {
     let input = $("Input");
-    input[7].setAttribute("type","password");
+    input[8].setAttribute("type","password");
   }
 
   renderButtons() {
@@ -71,11 +71,12 @@ export default class NewPersonnel extends React.Component{
           let phone = input[3].value.trim();
           let address = input[4].value.trim();
           let division = input[5].value.trim();
-          let password = input[6].value.trim();
-          let confirmPassword = input[7].value.trim();
+          let position = input[6].value.trim();
+          let password = input[7].value.trim();
+          let confirmPassword = input[8].value.trim();
           let notes = note[0].value.trim();
           Meteor.call('personnel.add',email,password,confirmPassword,firstName,
-            lastName,phone,address,division,notes,isAdmin);
+            lastName,phone,address,division,position,notes,isAdmin);
           this.props.onExit();
         }}
         onCancel={() => {
@@ -150,6 +151,8 @@ export default class NewPersonnel extends React.Component{
         <p>Address:</p>
         <Input/>
         <p>Division:</p>
+        <Input/>
+        <p>Position:</p>
         <Input/>
         <p>Please enter a password for your new personnel:</p>
         <Input

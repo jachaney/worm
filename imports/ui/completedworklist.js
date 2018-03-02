@@ -45,6 +45,7 @@ export default class CompletedWorkList extends React.Component{
           <p>Due Date: {moment(workOrder.dueDate).format('MMM Do YYYY')}</p>
           <p>Start Time: {moment(workOrder.dueDate).format("h:mm a")}</p>
           <p>Completed On: {moment(workOrder.completedOn).format('MMM Do YYYY h:mm a')}</p>
+          <p>Completed By: {workOrder.completedBy}</p>
           <span>Status:<h3 style={{color: "green"}}>Complete</h3></span>
         </Card>
       </div>

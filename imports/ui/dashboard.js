@@ -45,6 +45,7 @@ export default class Dashboard extends React.Component {
       disableCurrentWorkList: false,
       disableCurrentDashboardSearch: false,
       disableContactsList: false,
+      divisions: [],
       endDate: new Date(),
       filterAssignedTech: '0',
       filterBeginningDate: '',
@@ -112,14 +113,15 @@ export default class Dashboard extends React.Component {
           let lastName = Meteor.user().profile.lastName;
           let email = Meteor.user().profile.email;
           let phone = Meteor.user().profile.phone;
+          let address = Meteor.user().profile.address;
           let division = Meteor.user().profile.division;
           let notes = Meteor.user().profile.notes;
           let isAdmin = Meteor.user().profile.isAdmin;
           let userKey = Meteor.user().profile.userKey;
           let orgKey = Meteor.user().profile.orgKey;
           let personnelId = Meteor.user().profile.personnelId;
-          Meteor.call('personnel.create',_id,firstName,lastName,email,phone,division,
-          notes,isAdmin,userKey,orgKey,personnelId);
+          Meteor.call('personnel.create',_id,firstName,lastName,email,phone,
+          address,division,notes,isAdmin,userKey,orgKey,personnelId);
         }
       });
     })
@@ -155,7 +157,6 @@ export default class Dashboard extends React.Component {
     const contacts = Contacts.find({},{sort:{lastName: 1}}).fetch();
     this.setState ({contacts});
     this.setState({showSelectedWorkOrder: false});
-    this.setState({showCurrentDashboardSearch: false});
     this.setState({showCurrentWorkFilter: false});
     this.setState({showCurrentWorkList: false});
     this.setState({showNewContact: false});
@@ -166,6 +167,7 @@ export default class Dashboard extends React.Component {
     this.setState({showPersonnelDashboard: false});
     this.setState({showMyProfile: false});
     this.setState({showNewPersonnel: false});
+    this.setState({showCurrentDashboardSearch: true});
     this.setState({showContactsList: true});
     document.getElementById('backgroundImage').style.display = "block";
   }
@@ -269,6 +271,7 @@ export default class Dashboard extends React.Component {
         this.setState({lastOpenDashboard: 'showPersonnelDashboard'});
         this.setState({showPersonnelDashboard: false});
       }
+      this.setState({showCurrentDashboardSearch: false});
       this.setState({showMyProfile: true});
     } else if (e.key === "personnelDashboard") {
       this.resetPersonnelDashboard();
@@ -309,6 +312,10 @@ export default class Dashboard extends React.Component {
       this.setState({showCurrentDashboardSearch: false});
       document.getElementById('dashboardDiv').style.marginTop = "";
       this.resetContactsDashboard();
+    } else if (this.state.showPersonnelDashboard === true) {
+      this.setState({showCurrentDashboardSearch: false});
+      document.getElementById('dashboardDiv').style.marginTop = "";
+      this.resetPersonnelDashboard();
     }
   }
 
@@ -342,6 +349,16 @@ export default class Dashboard extends React.Component {
     } else if (this.state.showContactsList === true && e.trim().length === 0) {
       let contacts = Contacts.find({},{sort:{lastName: 1}}).fetch();
       this.setState({contacts});
+    } else if (this.state.showPersonnelDashboard === true && e.trim().length > 0) {
+      let personnel = Personnel.find({$or: [{lastName: {$regex: e, $options: 'i'}},
+        {firstName: {$regex: e, $options: 'i'}},{address:{$regex: e, $options: 'i'}},
+        {phone:{$regex: e, $options: 'i'}},{email:{$regex: e, $options: 'i'}},
+        {division:{$regex: e, $options: 'i'}},{position:{$regex: e, $options: 'i'}},
+        {personnelId:{$regex: e, $options: 'i'}}]}).fetch();
+      this.setState ({personnel});
+    } else if (this.state.showPersonnelDashboard === true && e.trim().length === 0) {
+      let personnel = Personnel.find({},{sort:{lastName: 1}}).fetch();
+      this.setState({personnel});
     }
   }
 
@@ -355,13 +372,6 @@ export default class Dashboard extends React.Component {
       this.setState({completedWorkOrders: this.state.completedWorkOrders.filter((workOrder) => {
         return moment(workOrder.dueDate).isBetween(beginning,end);
       })})
-      // let workOrders = WorkOrders.find({$and:[{dueDate: {$gte: beginning, $lte: end}},
-      //   {$or: [{isComplete: false},{isComplete: undefined}]}]},
-      //   {sort: {dueDate: 1}}).fetch();
-      // this.setState ({workOrders});
-      // const completedWorkOrders = WorkOrders.find({$and:[{dueDate: {$gte: beginning, $lte: end}},
-      //   {isComplete: true}]},{sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
-      // this.setState({completedWorkOrders})
     } else {
       const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},
         {sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
@@ -374,23 +384,43 @@ export default class Dashboard extends React.Component {
   onSelectAssignedTechChange(e) {
     if ( e != undefined ) {
       this.setState({workOrders: this.state.workOrders.filter((workOrder) => {
-          return workOrder.assignedTech === e
+          return workOrder.assignedTech === e;
         })
       });
       this.setState({completedWorkOrders: this.state.completedWorkOrders.filter((workOrder) => {
-          return workOrder.assignedTech === e
+          return workOrder.assignedTech === e;
         })
       });
-      // let workOrders = WorkOrders.find({$and:[{assignedTech: e},{isComplete: false}]},{sort: {dueDate: 1}}).fetch();
-      // this.setState ({workOrders});
-      // const completedWorkOrders = WorkOrders.find({isComplete: true,assignedTech: e},{sort:{completedOn: 1}}).fetch();
-      // this.setState ({completedWorkOrders});
     } else {
       const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},
         {sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
       this.setState ({workOrders});
       const completedWorkOrders = WorkOrders.find({isComplete: true},{sort:{completedOn: 1}}).fetch();
       this.setState ({completedWorkOrders});
+    }
+  }
+
+  onFilterByDivision(e) {
+    if (e != undefined) {
+      this.setState({personnel: this.state.personnel.filter((person) => {
+          return person.division === e;
+        })
+      })
+    } else {
+      let personnel = Personnel.find({},{sort:{lastName: 1}}).fetch();
+      this.setState({personnel});
+    }
+  }
+
+  onFilterByPosition(e) {
+    if (e != undefined) {
+      this.setState({personnel: this.state.personnel.filter((person) => {
+          return person.position === e;
+        })
+      })
+    } else {
+      let personnel = Personnel.find({},{sort:{lastName: 1}}).fetch();
+      this.setState({personnel});
     }
   }
 
@@ -448,6 +478,14 @@ export default class Dashboard extends React.Component {
       this.setState({showPersonnelDashboard: true});
     }
     this.setState({showMyProfile: false});
+  }
+
+  onFilterClose() {
+    if (this.state.showCurrentWorkList) {
+      this.resetWorkOrderDashboard();
+    } else if (this.state.showPersonnelDashboard) {
+      this.resetPersonnelDashboard();
+    }
   }
 
   renderAssignToOptions() {
@@ -579,6 +617,20 @@ export default class Dashboard extends React.Component {
               <Icon type="user-add"/>
               <span>Add Personnel</span>
             </Menu.Item>
+            <Menu.Item
+              disabled={this.state.showPersonnelDashboard ? false : true}
+              key="showSearch"
+            >
+              <Icon type="search"/>
+              <span>Search Personnel</span>
+            </Menu.Item>
+            <Menu.Item
+              disabled={this.state.showPersonnelDashboard ? false : true}
+              key="showFilter"
+            >
+              <Icon type="filter"/>
+              <span>Filter Personnel</span>
+            </Menu.Item>
           </SubMenu>
           <Menu.Item
             key="logout"
@@ -651,17 +703,25 @@ export default class Dashboard extends React.Component {
             <CurrentDashboardSearch
               onClose={this.searchClose.bind(this)}
               onSearchEnter={this.onSearchEnter.bind(this)}
+              showContactsList={this.state.showContactsList}
             />
           : null}
           {this.state.showCurrentWorkFilter ?
             <CurrentWorkFilter
               workorders={this.state.workOrders}
               personnel={this.state.personnel}
-              onClose={this.resetWorkOrderDashboard.bind(this)}
+              contact={this.state.contacts}
+              divisions={this.state.divisions}
+              onClose={this.onFilterClose.bind(this)}
               onFilterByRange={this.onFilterByRange.bind(this)}
               onSelectAssignedTechChange={this.onSelectAssignedTechChange.bind(this)}
+              onFilterByDivision={this.onFilterByDivision.bind(this)}
+              onFilterByPosition={this.onFilterByPosition.bind(this)}
               toggleShowComplete={this.toggleShowComplete.bind(this)}
               toggleShowCompleteOn={this.state.toggleShowCompleteOn}
+              showCurrentWorkList={this.state.showCurrentWorkList}
+              showPersonnelDashboard={this.state.showPersonnelDashboard}
+              showCompletedWorkList={this.state.showCompletedWorkList}
             />
           : null}
           <div

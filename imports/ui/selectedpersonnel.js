@@ -50,11 +50,12 @@ export default class SelectedPersonnel extends React.Component{
         let phone = input[3].value.trim();
         let address = input[4].value.trim();
         let division = input[5].value.trim();
+        let position = input[6].value.trim();
         let notes = note[0].value.trim();
         if (firstName != person.firstName || lastName != person.lastName ||
           email != person.email || division != person.division ||
           phone != person.phone || notes != person.notes || address != person.address ||
-          isAdmin != person.isAdmin) {
+          isAdmin != person.isAdmin || position != person.position) {
             return this.setState({showSaveProfileModal: true});
           } else {
             this.props.onExit();
@@ -70,8 +71,8 @@ export default class SelectedPersonnel extends React.Component{
     this.state.selectedPersonnel.map((person) => {
       let userKey = person.userKey;
       let input = $("Input");
-      let newPassword = input[6].value.trim();
-      let confirmPassword = input[7].value.trim();
+      let newPassword = input[7].value.trim();
+      let confirmPassword = input[8].value.trim();
       let complexPassword = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
       SimpleSchema.setDefaultMessages({
         messages: {
@@ -112,22 +113,22 @@ export default class SelectedPersonnel extends React.Component{
 
   onCreateEyeMouseDown() {
     let input = $("Input");
-    input[6].setAttribute("type","text");
+    input[7].setAttribute("type","text");
   }
 
   onCreateEyeMouseUp() {
     let input = $("Input");
-    input[6].setAttribute("type","password");
+    input[7].setAttribute("type","password");
   }
 
   onConfirmEyeMouseDown() {
     let input = $("Input");
-    input[7].setAttribute("type","text");
+    input[8].setAttribute("type","text");
   }
 
   onConfirmEyeMouseUp() {
     let input = $("Input");
-    input[7].setAttribute("type","password");
+    input[8].setAttribute("type","password");
   }
 
   onOldPassword(e) {
@@ -229,9 +230,9 @@ export default class SelectedPersonnel extends React.Component{
                   let division = input[5].value.trim();
                   let notes = note[0].value.trim();
                   Meteor.call('userprofile.update',userKey,firstName,lastName,email,
-                    phone,address,division,notes,isAdmin,personnelId);
+                    phone,address,division,position,notes,isAdmin,personnelId);
                   Meteor.call('personnel.update',userKey,firstName,lastName,email,
-                    phone,address,division,notes,isAdmin,personnelId);
+                    phone,address,division,position,notes,isAdmin,personnelId);
                   message.success("Profile updated", 5);
                   this.props.onExit();
                 })
@@ -338,6 +339,12 @@ export default class SelectedPersonnel extends React.Component{
               defaultValue={person.division}
             />
           : <p>{person.division}</p>}
+          <p>Position:</p>
+          {Meteor.user().profile.isAdmin ?
+            <Input
+              defaultValue={person.position}
+            />
+          : <p>{person.position}</p>}
         </div>
         <div
           className="contactsDivItems"

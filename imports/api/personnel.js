@@ -26,8 +26,8 @@ Meteor.methods({
       return false;
     }
   },
-  'personnel.create'(_id,firstName,lastName,email,phone,division,
-    notes,isAdmin,userKey,orgKey,personnelId) {
+  'personnel.create'(_id,firstName,lastName,email,phone,address,
+    division,position,notes,isAdmin,userKey,orgKey,personnelId) {
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
@@ -37,7 +37,9 @@ Meteor.methods({
       lastName,
       email,
       phone,
+      address,
       division,
+      position,
       notes,
       isAdmin,
       userKey,
@@ -46,7 +48,7 @@ Meteor.methods({
     })
   },
   'personnel.update'(userKey,firstName,lastName,email,phone,
-    address,division,notes,isAdmin) {
+    address,division,position,notes,isAdmin) {
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
@@ -58,13 +60,14 @@ Meteor.methods({
         phone,
         address,
         division,
+        position,
         notes,
         isAdmin
       }
     },{upsert: true})
   },
   'personnel.add' (email,password,confirmPassword,firstName,lastName,phone,
-    address,division,notes,isAdmin) {
+    address,division,position,notes,isAdmin) {
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
@@ -121,6 +124,7 @@ Meteor.methods({
         phone,
         address,
         division,
+        position,
         notes,
         isAdmin,
         userKey,
@@ -136,6 +140,7 @@ Meteor.methods({
       phone,
       address,
       division,
+      position,
       notes,
       isAdmin,
       userKey,

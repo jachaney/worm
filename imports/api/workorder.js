@@ -145,7 +145,8 @@ Meteor.methods({
     WorkOrders.update({_id},
     {$set: {
       isComplete: true,
-      completedOn: moment().format('YYYY-MM-DD HH:mm')
+      completedOn: moment().format('YYYY-MM-DD HH:mm'),
+      completedBy: Meteor.user().profile.lastName + ", " + Meteor.user().profile.firstName + ` (ID:${Meteor.user().profile.personnelId})`
     }},{upsert: true})
   },
   'workorder.duplicate' (assignedTech,createdBy,customerName,dueDate,

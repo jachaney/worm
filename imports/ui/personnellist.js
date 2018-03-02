@@ -98,6 +98,7 @@ export default class PersonnelList extends React.Component{
               </a>
             </span>
             <p>Division: {person.division}</p>
+            <p>Position: {person.position}</p>
           </div>
         </Card>
       </div>

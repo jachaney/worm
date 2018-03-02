@@ -45,10 +45,12 @@ export default class MyProfile extends React.Component{
       let phone = input[3].value.trim();
       let address = input[4].value.trim();
       let division = input[5].value.trim();
+      let position = input[6].value.trim();
       let notes = note[0].value.trim();
       if (firstName != user.firstName || lastName != user.lastName ||
         email != user.email || division != user.division ||
-        phone != user.phone || notes != user.notes || address != user.address) {
+        phone != user.phone || notes != user.notes || address != user.address
+        || position != user.position) {
           return this.setState({showSaveProfileModal: true});
         } else {
           this.props.onMyProfileExit();
@@ -64,32 +66,32 @@ export default class MyProfile extends React.Component{
 
   onOldEyeMouseDown() {
     let input = $("Input");
-    input[5].setAttribute("type","text");
+    input[7].setAttribute("type","text");
   }
 
   onOldEyeMouseUp() {
     let input = $("Input");
-    input[5].setAttribute("type","password");
+    input[7].setAttribute("type","password");
   }
 
   onCreateEyeMouseDown() {
     let input = $("Input");
-    input[6].setAttribute("type","text");
+    input[8].setAttribute("type","text");
   }
 
   onCreateEyeMouseUp() {
     let input = $("Input");
-    input[6].setAttribute("type","password");
+    input[8].setAttribute("type","password");
   }
 
   onConfirmEyeMouseDown() {
     let input = $("Input");
-    input[7].setAttribute("type","text");
+    input[9].setAttribute("type","text");
   }
 
   onConfirmEyeMouseUp() {
     let input = $("Input");
-    input[7].setAttribute("type","password");
+    input[9].setAttribute("type","password");
   }
 
   onOldPassword(e) {
@@ -119,9 +121,9 @@ export default class MyProfile extends React.Component{
   changeUserPassword(e) {
     e.preventDefault();
     let input = $("Input");
-    let oldPassword = input[5].value.trim();
-    let newPassword = input[6].value.trim();
-    let confirmPassword = input[7].value.trim();
+    let oldPassword = input[7].value.trim();
+    let newPassword = input[8].value.trim();
+    let confirmPassword = input[9].value.trim();
     let complexPassword = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
     SimpleSchema.setDefaultMessages({
       messages: {
@@ -147,16 +149,16 @@ export default class MyProfile extends React.Component{
         }
       }).validate({newPassword});
     } catch (e) {
-      return message.error(e.message, 10);
+      return message.error(e.message, 5);
       throw new Meteor.Error(400, e.message);
     }
     Accounts.changePassword(oldPassword, newPassword, function(err) {
       if (err) {
         return alert(err.reason);
       } else {
-        input[5].value = "";
-        input[6].value = "";
         input[7].value = "";
+        input[8].value = "";
+        input[9].value = "";
         this.setState({showChangePasswordModal: false});
         return message.success("Password changed",5);
       }
@@ -253,11 +255,12 @@ export default class MyProfile extends React.Component{
                 let phone = input[3].value.trim();
                 let address = input[4].value.trim()
                 let division = input[5].value.trim();
+                let position = input[6].value.trim();
                 let notes = note[0].value.trim();
                 Meteor.call('userprofile.update',userKey,firstName,lastName,email,
-                  phone,address,division,notes,isAdmin,personnelId);
+                  phone,address,division,position,notes,isAdmin,personnelId);
                 Meteor.call('personnel.update',userKey,firstName,lastName,email,
-                  phone,address,division,notes,isAdmin,personnelId);
+                  phone,address,division,position,notes,isAdmin,personnelId);
                 message.success("Profile updated", 5);
                 this.props.onMyProfileExit();
               }}
@@ -357,6 +360,13 @@ export default class MyProfile extends React.Component{
               defaultValue={user.division}
             />
           : <p>{user.division}</p>
+          }
+          <p>Position:</p>
+          {user.isAdmin ?
+            <Input
+              defaultValue={user.position}
+            />
+          : <p>{user.position}</p>
           }
         </div>
         <div
