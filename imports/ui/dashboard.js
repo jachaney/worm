@@ -86,7 +86,7 @@ export default class Dashboard extends React.Component {
     this.dashTracker = Tracker.autorun(() => {
       let workOrdersReady = Meteor.subscribe('WorkOrders');
       const workOrders = WorkOrders.find({$or:[{isComplete: false},{isComplete: undefined}]},
-        {sort:{clockedIn: -1,isOnBreak: -1,dueDate: 1}}).fetch();
+        {sort:{clockedIn: -1,isOnBreak: -1,priority: 1,dueDate: 1}}).fetch();
       this.setState ({workOrders});
       const completedWorkOrders = WorkOrders.find({isComplete: true},{sort:{completedOn: 1}}).fetch();
       this.setState ({completedWorkOrders});
@@ -481,7 +481,7 @@ export default class Dashboard extends React.Component {
   }
 
   onFilterClose() {
-    if (this.state.showCurrentWorkList) {
+    if (this.state.showCurrentWorkList || this.state.showCompletedWorkList) {
       this.resetWorkOrderDashboard();
     } else if (this.state.showPersonnelDashboard) {
       this.resetPersonnelDashboard();
@@ -764,6 +764,7 @@ export default class Dashboard extends React.Component {
           : null}
           {this.state.showNewWorkOrder ?
             <NewWorkOrder
+              contacts={this.state.contacts}
               personnel={this.state.personnel}
               workOrders={this.state.workOrders}
               onClose={this.resetWorkOrderDashboard.bind(this)}

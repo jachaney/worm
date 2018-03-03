@@ -2,6 +2,7 @@ import { Meteor } from 'meteor/meteor';
 
 import '../imports/api/contacts';
 import '../imports/api/contactitems';
+import '../imports/api/materials';
 import '../imports/api/meteorusers';
 import '../imports/api/newaccountvalidation';
 import '../imports/api/personnel';

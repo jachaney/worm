@@ -69,6 +69,7 @@ export default class CurrentWorkList extends React.Component{
                           let workOrderKey = workOrder.workOrderKey;
                           Meteor.call('delete.workorder', workOrderKey);
                           Meteor.call('delete.workorderitems', workOrderKey);
+                          Meteor.call('materials.bulkremove',workOrderKey);
                         },
                         onCancel() {
                           null;

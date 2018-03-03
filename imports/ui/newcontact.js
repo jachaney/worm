@@ -25,7 +25,7 @@ export default class NewContact extends React.Component{
 
   componentDidMount() {
     let _id = Random.id();
-    let contactKey = Random.id();
+    let contactKey = Random.id(6);
     Meteor.call('new.contact',_id,contactKey);
     this.setState({_id: _id});
     this.setState({contactKey: contactKey});

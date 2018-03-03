@@ -23,6 +23,7 @@ Meteor.methods({
     }
     WorkOrderItems.insert({
       createdOn: moment().format('YYYY-MM-DD HH:mm:ss:SSSSSS'),
+      createdBy: Meteor.user().profile.userKey,
       isHeading: isHeading,
       isCheckbox: isCheckbox,
       isChecked: false,
@@ -80,6 +81,7 @@ Meteor.methods({
       userKey,
       contents,
       createdOn: moment().format('YYYY-MM-DD HH:mm:ss:SSSSSS'),
+      createdBy: Meteor.user().profile.userKey,
       isChecked: false,
       headingKey: Random.id(),
       checkboxKey: Random.id()

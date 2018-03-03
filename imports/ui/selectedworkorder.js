@@ -6,6 +6,7 @@ import { Random } from 'meteor/random';
 import moment from 'moment';
 import { Checkbox,Input,Menu,Button,Icon,Divider,DatePicker,TimePicker } from 'antd';
 
+import { Materials } from './../api/materials';
 import { Time } from './../api/time';
 import { WorkOrders } from './../api/workorder';
 import { WorkOrderItems } from './../api/workorderitems';
@@ -19,6 +20,7 @@ export default class SelectedWorkOrder extends React.Component{
     this.state = {
       editMode: 'time',
       editTimestamp: '',
+      materials: [],
       newClockIn: '',
       newClockOut:'',
       selectedWorkOrder: [],
@@ -36,8 +38,11 @@ export default class SelectedWorkOrder extends React.Component{
       const selectedWorkOrder = WorkOrders.find({workOrderKey: this.props.selectedWorkOrderId}).fetch();
       this.setState ({selectedWorkOrder});
       let selectedWorkOrderItemsReady = Meteor.subscribe('WorkOrderItems');
-      const tasks = WorkOrderItems.find({workOrderKey: this.props.selectedWorkOrderId}).fetch();
+      const tasks = WorkOrderItems.find({workOrderKey: this.props.selectedWorkOrderId},{sort:{createdOn: 1}}).fetch();
       this.setState ({tasks});
+      Meteor.subscribe('Materials');
+      const materials = Materials.find({workOrderKey: this.props.selectedWorkOrderId},{sort:{createdOn: 1}}).fetch();
+      this.setState({materials});
       let selectedWorkOrderTimesReady = Meteor.subscribe('Time');
       const times = Time.find({workOrderKey: this.props.selectedWorkOrderId}).fetch();
       this.setState ({times});
@@ -98,6 +103,18 @@ export default class SelectedWorkOrder extends React.Component{
     if (open) {
       this.setState({editMode: 'time'});
     }
+  }
+
+  updateMaterialContents(e) {
+    let contentKey = e.target.id;
+    let contents = e.target.value;
+    Meteor.call('material.updatecontents',contentKey,contents);
+  }
+
+  updateMaterialQty(e) {
+    let qtyKey = e.target.id;
+    let qty = e.target.value;
+    Meteor.call('material.updateqty',qtyKey,qty);
   }
 
   renderTimes() {
@@ -371,6 +388,46 @@ export default class SelectedWorkOrder extends React.Component{
     })
   }
 
+  renderMaterials() {
+    return this.state.materials.map((material) => {
+      return <div
+        key={material._id}
+      >
+        <div
+          className="pure-u-2-24 workOrderCheckboxDiv"
+        >
+          <Icon
+            className="workOrderItemDelete"
+            type="delete"
+            title="Delete Material"
+            onClick={() => {
+              let _id = material._id;
+              Meteor.call('material.remove',_id)
+            }}
+          />
+        </div>
+        <div
+          className="pure-u-20-24"
+        >
+          <Input
+            id={material.contentKey}
+            onChange={this.updateMaterialContents.bind(this)}
+            defaultValue={material.contents}
+          />
+        </div>
+        <div
+          className="pure-u-2-24"
+        >
+          <Input
+            id={material.qtyKey}
+            onChange={this.updateMaterialQty.bind(this)}
+            defaultValue={material.qty}
+          />
+        </div>
+      </div>
+    })
+  }
+
   render() {
     return this.state.selectedWorkOrder.map((workOrder) => {
       return <div
@@ -504,6 +561,39 @@ export default class SelectedWorkOrder extends React.Component{
             className="workOrderItems"
           >
             {this.renderTaskList()}
+          </div>
+          <div
+            className="workOrderItems"
+          >
+            <Divider>Materials:</Divider>
+            <h3
+              className="pure-u-22-24"
+              style={{
+                display: this.state.materials.length > 0 ? null : "none",
+                textAlign: "center"
+              }}
+            >
+              Name:
+            </h3>
+            <h3
+              className="pure-u-2-24"
+              style={{
+                display: this.state.materials.length > 0 ? null : "none",
+                textAlign: "center"
+              }}
+            >
+              Qty:
+            </h3>
+            {this.renderMaterials()}
+          </div>
+          <div
+            className="pure-u-1 newItemButtonsDiv"
+            id="newItemButtonsDiv"
+          >
+            <Button onClick={(e) => {
+              let workOrderKey = workOrder.workOrderKey;
+              Meteor.call('material.new',workOrderKey);
+            }}>Add Material</Button>
           </div>
           <Divider>
             Work Order Notes:

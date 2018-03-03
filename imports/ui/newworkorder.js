@@ -7,6 +7,8 @@ import { Random } from 'meteor/random';
 import moment from 'moment';
 import { DatePicker,TimePicker,Checkbox,Input,Select,Menu,Button,Icon,message,Divider } from 'antd';
 
+import { Contacts } from './../api/contacts';
+import { Materials } from './../api/materials';
 import { WorkOrders } from './../api/workorder';
 import { WorkOrderItems } from './../api/workorderitems';
 
@@ -18,6 +20,7 @@ export default class NewWorkOrder extends React.Component{
   constructor(props) {
     super(props);
     this.state = {
+      materials: [],
       selectedCustomer: '',
       selectedDueDate: '',
       selectedFrequency: '0',
@@ -40,8 +43,11 @@ export default class NewWorkOrder extends React.Component{
       this.setState({thisWorkOrder});
       this.state.thisWorkOrder.map((workOrder) => {
         let workOrderItemsReady = Meteor.subscribe('WorkOrderItems');
-        const workOrderItems = WorkOrderItems.find({workOrderKey: workOrder.workOrderKey});
+        const workOrderItems = WorkOrderItems.find({workOrderKey: workOrder.workOrderKey}).fetch();
         this.setState({workOrderItems});
+        Meteor.subscribe('Materials');
+        let materials = Materials.find({workOrderKey: workOrder.workOrderKey}).fetch();
+        this.setState({materials});
       })
     })
   }
@@ -54,6 +60,18 @@ export default class NewWorkOrder extends React.Component{
     let _id = e.target.id;
     let contents = e.target.value;
     Meteor.call('update.workorderitem',_id,contents);
+  }
+
+  updateMaterialContents(e) {
+    let contentKey = e.target.id;
+    let contents = e.target.value;
+    Meteor.call('material.updatecontents',contentKey,contents);
+  }
+
+  updateMaterialQty(e) {
+    let qtyKey = e.target.id;
+    let qty = e.target.value;
+    Meteor.call('material.updateqty',qtyKey,qty);
   }
 
   renderWorkOrderItems() {
@@ -104,10 +122,14 @@ export default class NewWorkOrder extends React.Component{
                 Meteor.call('delete.workorderitem', _id)
               }}
             />
+          </div>
+          <div
+            className="pure-u-1-24 workOrderCheckboxDiv"
+          >
             <Checkbox/>
           </div>
           <div
-            className="pure-u-23-24"
+            className="pure-u-22-24"
           >
             <TextArea
               autosize={{minRows: 1}}
@@ -125,10 +147,59 @@ export default class NewWorkOrder extends React.Component{
     return this.props.personnel.map((person) => {
       return <Option
         key={person._id}
-        value={person.lastName + ", " + person.firstName + ` (ID: ${person.personnelId})`}
+        value={`${person.lastName}, ${person.firstName} (ID: ${person.personnelId})`}
       >
         {person.lastName}, {person.firstName} (ID: {person.personnelId})
       </Option>
+    })
+  }
+
+  renderCustomerList() {
+    return this.props.contacts.map((contact) => {
+      return <Option
+        key={contact._id}
+        value={contact._id}
+      >
+        {contact.lastName}, {contact.firstName} ` (ID:${contact.contactKey})`
+      </Option>
+    })
+  }
+
+  renderMaterials() {
+    return this.state.materials.map((material) => {
+      return <div
+        key={material._id}
+      >
+        <div
+          className="pure-u-2-24 workOrderCheckboxDiv"
+        >
+          <Icon
+            className="workOrderItemDelete"
+            type="delete"
+            title="Delete Material"
+            onClick={() => {
+              let _id = material._id;
+              Meteor.call('material.remove',_id)
+            }}
+          />
+        </div>
+        <div
+          className="pure-u-20-24"
+        >
+          <Input
+            id={material.contentKey}
+            onChange={this.updateMaterialContents.bind(this)}
+          />
+        </div>
+        <div
+          className="pure-u-2-24"
+        >
+          <Input
+            id={material.qtyKey}
+            onChange={this.updateMaterialQty.bind(this)}
+          />
+        </div>
+      </div>
     })
   }
 
@@ -148,10 +219,43 @@ export default class NewWorkOrder extends React.Component{
             id="newTitle"
           />
           <label>Customer:</label>
-          <Input
-            type="text"
-            id="newCustomer"
-          />
+          <br/>
+          <div
+            className="pure-u-sm-1 pure-u-lg-1-2"
+          >
+            <Select
+              allowClear
+              className="filterAssignedTech"
+              mode="combobox"
+              placeholder="Choose from a list of your contacts..."
+              value={this.state.selectedCustomer}
+              onChange={(e) => {
+                if (e != undefined) {
+                  let foundContact = Contacts.find({_id: e}).fetch();
+                  foundContact.map((contact) => {
+                    this.setState({selectedCustomer: `${contact.lastName}, ${contact.firstName} (ID:${contact.contactKey})`});
+                    $("Input").eq(2).val(`${contact.lastName}, ${contact.firstName} (ID:${contact.contactKey})`);
+                    $("Input").eq(3).val(`${contact.address}`);
+                  })
+                } else {
+                  this.setState({selectedCustomer: ''});
+                  $("Input").eq(2).val('');
+                  $("Input").eq(3).val('');
+                }
+              }}
+            >
+              {this.renderCustomerList()}
+            </Select>
+          </div>
+          <div
+            className="pure-u-sm-1 pure-u-lg-1-2"
+          >
+            <Input
+              type="text"
+              id="newCustomer"
+              placeholder="...or type in your customer's name here."
+            />
+          </div>
           <label>Location:</label>
           <Input
             type="text"
@@ -267,6 +371,39 @@ export default class NewWorkOrder extends React.Component{
             Meteor.call('new.workorderitem',isHeading,isCheckbox,workOrderKey);
           }}>Add Checkbox</Button>
         </div>
+        <div
+          className="workOrderItems"
+        >
+          <Divider>Materials:</Divider>
+          <h3
+            className="pure-u-22-24"
+            style={{
+              display: this.state.materials.length > 0 ? null : "none",
+              textAlign: "center"
+            }}
+          >
+            Name:
+          </h3>
+          <h3
+            className="pure-u-2-24"
+            style={{
+              display: this.state.materials.length > 0 ? null : "none",
+              textAlign: "center"
+            }}
+          >
+            Qty:
+          </h3>
+          {this.renderMaterials()}
+        </div>
+        <div
+          className="pure-u-1 newItemButtonsDiv"
+          id="newItemButtonsDiv"
+        >
+          <Button onClick={(e) => {
+            let workOrderKey = workOrder.workOrderKey;
+            Meteor.call('material.new',workOrderKey);
+          }}>Add Material</Button>
+        </div>
         <Divider>
           Work Order Notes:
         </Divider>
@@ -304,8 +441,9 @@ export default class NewWorkOrder extends React.Component{
             type="danger"
             onClick={(e) => {
               let workOrderKey = workOrder.workOrderKey;
-              Meteor.call('delete.workorder', workOrderKey);
-              Meteor.call('delete.workorderitems', workOrderKey);
+              Meteor.call('delete.workorder',workOrderKey);
+              Meteor.call('delete.workorderitems',workOrderKey);
+              Meteor.call('materials.bulkremove',workOrderKey);
               this.props.onClose();
           }}>Cancel</Button>
         </div>
