@@ -3,6 +3,7 @@ import { Accounts } from 'meteor/accounts-base';
 import createHistory from 'history/createBrowserHistory';
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker';
+import { Random } from 'meteor/random';
 import moment from 'moment';
 import { DatePicker,Menu,Icon,Row,Dropdown,Modal,Select } from 'antd';
 
@@ -77,6 +78,7 @@ export default class Dashboard extends React.Component {
       showSelectedPersonnel: false,
       showSelectedWorkOrder: false,
       startDate: new Date(),
+      thisUserKey: '',
       toggleShowCompleteOn: false,
       workOrders: [],
     }
@@ -106,24 +108,15 @@ export default class Dashboard extends React.Component {
       Meteor.subscribe('Personnel');
       let personnel = Personnel.find({},{sort:{lastName: 1}}).fetch();
       this.setState({personnel});
-      Meteor.call('personnel.confirmrecord', function(err, recordVerified) {
-        if (!recordVerified) {
-          let _id = Meteor.user()._id;
-          let firstName = Meteor.user().profile.firstName;
-          let lastName = Meteor.user().profile.lastName;
-          let email = Meteor.user().profile.email;
-          let phone = Meteor.user().profile.phone;
-          let address = Meteor.user().profile.address;
-          let division = Meteor.user().profile.division;
-          let notes = Meteor.user().profile.notes;
-          let isAdmin = Meteor.user().profile.isAdmin;
-          let userKey = Meteor.user().profile.userKey;
-          let orgKey = Meteor.user().profile.orgKey;
-          let personnelId = Meteor.user().profile.personnelId;
-          Meteor.call('personnel.create',_id,firstName,lastName,email,phone,
-          address,division,notes,isAdmin,userKey,orgKey,personnelId);
+      let userReady = Meteor.subscribe('ThisUser');
+      if (userReady.ready()) {
+        let confirmPersonnelDocument = Personnel.find({userKey: Meteor.user().profile.userKey}).fetch();
+        if (confirmPersonnelDocument.length) {
+          return null
+        } else {
+          Meteor.call('personnel.onrecordnotfound');
         }
-      });
+      }
     })
   }
 
@@ -796,7 +789,7 @@ export default class Dashboard extends React.Component {
           : null}
           {this.state.showMyProfile ?
             <MyProfile
-              id={Meteor.user()._id}
+              userKey={Meteor.user().profile.userKey}
               onMyProfileExit={this.onMyProfileExit.bind(this)}
             />
           : null}

@@ -15,8 +15,8 @@ export default class PersonnelList extends React.Component{
 
   render() {
     return this.props.personnel.map((person) => {
-      let _id = person._id;
-      if (_id != Meteor.user()._id) {
+      let userKey = person.userKey;
+      if (userKey != Meteor.user().profile.userKey) {
       return <div
         className="pure-u-1 pure-u-md-1-2 pure-u-lg-1-5"
         key={_id}

@@ -15,16 +15,24 @@ if (Meteor.isServer) {
 }
 
 Meteor.methods({
-  'personnel.confirmrecord'() {
+  'personnel.onrecordnotfound'() {
     if (!this.userId) {
       throw new Meteor.Error('Unauthorized access');
     }
-    let recordVerified = Personnel.find({_id: this.userId}).fetch();
-    if (recordVerified.length) {
-      return true;
-    } else {
-      return false;
-    }
+    Personnel.insert({
+      firstName: Meteor.user().profile.firstName,
+      lastName: Meteor.user().profile.lastName,
+      email: Meteor.user().profile.email,
+      phone: Meteor.user().profile.phone,
+      address: Meteor.user().profile.address,
+      division: Meteor.user().profile.division,
+      position: Meteor.user().profile.position,
+      notes: Meteor.user().profile.notes,
+      isAdmin: Meteor.user().profile.isAdmin,
+      userKey: Meteor.user().profile.userKey,
+      orgKey: Meteor.user().profile.orgKey,
+      personnelId: Meteor.user().profile.personnelId
+    })
   },
   'personnel.create'(_id,firstName,lastName,email,phone,address,
     division,position,notes,isAdmin,userKey,orgKey,personnelId) {

@@ -7,6 +7,12 @@ import { Random } from 'meteor/random';
 import { message } from 'antd';
 
 if (Meteor.isServer) {
+  Meteor.publish('ThisUser', function() {
+    return Meteor.users.find({_id: this.userId});
+  })
+}
+
+if (Meteor.isServer) {
   Meteor.methods({
 
     'userprofile.update'(userKey,firstName,lastName,email,phone,

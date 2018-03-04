@@ -24,7 +24,7 @@ export default class MyProfile extends React.Component{
   componentDidMount() {
     this.myProfileTracker = Tracker.autorun(() => {
       let myProfileReady = Meteor.subscribe('Personnel');
-      let myProfileInfo = Personnel.find({_id: this.props.id}).fetch();
+      let myProfileInfo = Personnel.find({userKey: this.props.userKey}).fetch();
       this.setState({myProfileInfo});
     })
   }
