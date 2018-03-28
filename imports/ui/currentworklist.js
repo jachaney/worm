@@ -57,6 +57,22 @@ export default class CurrentWorkList extends React.Component{
                   <a
                     disabled={Meteor.user().profile.isAdmin ? false : true}
                     style={{
+                      color: Meteor.user().profile.isAdmin ? null : "#d3d3d3"
+                    }}
+                    onClick={() => {
+                      this.props.onEditWorkOrder(key);
+                    }}
+                  >
+                    <Icon
+                      type="edit"
+                    />
+                    &nbsp;Edit Work Order
+                  </a>
+                </Menu.Item>
+                <Menu.Item>
+                  <a
+                    disabled={Meteor.user().profile.isAdmin ? false : true}
+                    style={{
                       color: Meteor.user().profile.isAdmin ? "red" : "#d3d3d3"
                     }}
                     onClick={(e) => {

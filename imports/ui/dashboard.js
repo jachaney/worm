@@ -12,6 +12,7 @@ import CompletedWorkList from './completedworklist';
 import CurrentWorkFilter from './currentworkfilter';
 import CurrentWorkList from './currentworklist';
 import CurrentDashboardSearch from './currentdashboardsearch';
+import EditWorkOrder from './editworkorder';
 import MyProfile from './myprofile';
 import NewContact from './newcontact';
 import NewPersonnel from './newpersonnel';
@@ -69,6 +70,7 @@ export default class Dashboard extends React.Component {
       showCurrentWorkList: true,
       showCurrentDashboardSearch: false,
       showDropdownMenu: true,
+			showEditWorkOrder: false,
       showMyProfile: false,
       showNewContact: false,
       showNewPersonnel: false,
@@ -141,6 +143,7 @@ export default class Dashboard extends React.Component {
     this.setState({showPersonnelDashboard: false});
     this.setState({showMyProfile: false});
     this.setState({showNewPersonnel: false});
+    this.setState({showEditWorkOrder: false});
     this.setState({showCurrentWorkList: true});
     document.getElementById('backgroundImage').style.display = "block";
   }
@@ -198,6 +201,20 @@ export default class Dashboard extends React.Component {
     }
   }
 
+	onEditWorkOrder(e) {
+    console.log(e);
+		this.setState({selectedWorkOrderId: e});
+    this.setState({showCurrentWorkList: false});
+    this.setState({showCompletedWorkList: false});
+    this.setState({showCurrentDashboardSearch: false});
+    this.setState({showCurrentWorkFilter: false});
+    this.setState({showSelectedWorkOrder: false});
+		this.setState({showEditWorkOrder: true});
+    if (this.state.clockedIn === false) {
+      this.setState({clockedInOrderId: e});
+    }
+	}
+
   onContactClick(e) {
     this.setState({selectedContactKey: e});
     this.setState({showContactsList: false});
@@ -252,6 +269,7 @@ export default class Dashboard extends React.Component {
       this.resetContactsDashboard();
     } else if (e.key === "addContact") {
       this.setState({showContactsList: false});
+      this.setState({showCurrentDashboardSearch: false});
       this.setState({showNewContact: true});
     } else if (e.key === "myProfile") {
       if (this.state.showCurrentWorkList === true) {
@@ -738,6 +756,7 @@ export default class Dashboard extends React.Component {
                 clockedInOrderId={this.state.clockedInOrderId}
                 onBreak={this.state.onBreak}
                 showAssignOrderModal={this.showAssignOrderModal.bind(this)}
+                onEditWorkOrder={this.onEditWorkOrder.bind(this)}
               />
             : null}
           </div>
@@ -810,6 +829,15 @@ export default class Dashboard extends React.Component {
               onExit={this.resetPersonnelDashboard.bind(this)}
             />
           : null}
+					{this.state.showEditWorkOrder ?
+						<EditWorkOrder
+              contacts={this.state.contacts}
+              personnel={this.state.personnel}
+							onEditWorkOrder={this.onEditWorkOrder.bind(this)}
+							onClose={this.resetWorkOrderDashboard.bind(this)}
+              selectedWorkOrderId={this.state.selectedWorkOrderId}
+						/>
+					: null}
         </div>
       </div>
     )

@@ -28,7 +28,8 @@ export default class ContactsList extends React.Component{
             <Icon
               id={contactKey}
               type="select"
-              onClick={this.onCardClick.bind(this)}
+              onClick={() => {this.props.onContactClick(contactKey)}}
+              // onClick={this.onCardClick.bind(this)}
             >Open</Icon>,
             <Dropdown
               overlay={<Menu
